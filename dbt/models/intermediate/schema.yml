@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: int_user_daily_metrics
+    description: "日级指标中间表：每日DAU、PV、购买量、加购量、收藏量及各类转化率"
+    columns:
+      - name: event_date
+        description: "统计日期"
+        tests:
+          - not_null
+          - unique
+      - name: dau
+        description: "日活跃用户数"
+      - name: pv_count
+        description: "页面浏览量（点击次数）"
+      - name: buy_count
+        description: "购买次数"
+      - name: cart_count
+        description: "加购次数"
+      - name: fav_count
+        description: "收藏次数"
+      - name: purchase_conversion_rate
+        description: "购买转化率 = 购买次数 / 点击次数 * 100"
+      - name: cart_conversion_rate
+        description: "加购转化率 = 加购次数 / 点击次数 * 100"
+      - name: fav_conversion_rate
+        description: "收藏转化率 = 收藏次数 / 点击次数 * 100"
+      - name: overall_conversion_rate
+        description: "综合转化率 = (购买+加购+收藏) / 点击次数 * 100"
+      - name: avg_pv_per_user
+        description: "人均PV"
+      - name: avg_buy_per_user
+        description: "人均购买次数"
+
+  - name: int_user_retention
+    description: "留存分析中间表：每日新增用户及次日/3日/7日留存率"
+    columns:
+      - name: event_date
+        description: "日期"
+        tests:
+          - not_null
+          - unique
+      - name: new_users
+        description: "当日新增用户数（首次活跃）"
+      - name: retained_d1
+        description: "次日留存用户数"
+      - name: retained_d3
+        description: "3日留存用户数"
+      - name: retained_d7
+        description: "7日留存用户数"
+      - name: retention_d1_rate
+        description: "次日留存率(%)"
+      - name: retention_d3_rate
+        description: "3日留存率(%)"
+      - name: retention_d7_rate
+        description: "7日留存率(%)"
+      - name: retention_d1_ma7
+        description: "次日留存率7日移动平均"
+
+  - name: int_conversion_funnel
+    description: "转化漏斗中间表：从点击到购买的各环节转化数、转化率及路径分析"
+    columns:
+      - name: event_date
+        description: "统计日期"
+        tests:
+          - not_null
+          - unique
+      - name: pv_users
+        description: "点击用户数（user_id + item_id维度）"
+      - name: fav_users
+        description: "收藏用户数"
+      - name: cart_users
+        description: "加购用户数"
+      - name: buy_users
+        description: "购买用户数"
+      - name: pv_to_fav_rate
+        description: "点击到收藏转化率(%)"
+      - name: fav_to_cart_rate
+        description: "收藏到加购转化率(%)"
+      - name: cart_to_buy_rate
+        description: "加购到购买转化率(%)"
+      - name: overall_buy_rate
+        description: "总体购买转化率(%)"
+      - name: direct_buy_count
+        description: "直接购买用户数（无加购/收藏）"
+      - name: cart_buy_rate
+        description: "加购后购买率(%)"

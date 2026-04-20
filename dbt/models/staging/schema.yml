@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_user_behavior
+    description: "清洗层模型：从原始CSV加载用户行为数据，进行基础类型转换和简单过滤"
+    columns:
+      - name: user_id
+        description: "用户唯一标识"
+        tests:
+          - not_null
+      - name: item_id
+        description: "商品唯一标识"
+        tests:
+          - not_null
+      - name: category_id
+        description: "商品类目ID"
+      - name: behavior_type
+        description: "行为类型：pv(点击), buy(购买), cart(加购), fav(收藏)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['pv', 'buy', 'cart', 'fav']
+      - name: event_timestamp
+        description: "行为发生的时间戳（Unix时间戳）"
+      - name: event_date
+        description: "行为发生的日期"
+        tests:
+          - not_null
+      - name: event_hour
+        description: "行为发生的小时（0-23）"
+      - name: day_of_week
+        description: "星期几（0=周日, 6=周六）"
+      - name: is_weekend
+        description: "是否为周末（1=是, 0=否）"
+      - name: time_period
+        description: "时间段标签：凌晨、上午、下午、晚上、深夜"
+      - name: _loaded_at
+        description: "数据加载时间"
