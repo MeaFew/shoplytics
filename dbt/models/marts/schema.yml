@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: mart_daily_kpi
+    description: "核心KPI宽表：整合所有日级指标，添加环比变化和3σ异常标记，面向业务使用"
+    columns:
+      - name: event_date
+        description: "统计日期"
+        tests:
+          - not_null
+          - unique
+      - name: dau
+        description: "日活跃用户数"
+      - name: pv_count
+        description: "页面浏览量"
+      - name: buy_count
+        description: "购买次数"
+      - name: purchase_conversion_rate
+        description: "购买转化率(%)"
+      - name: retention_d1_rate
+        description: "次日留存率(%)"
+      - name: new_users
+        description: "新增用户数"
+      - name: dau_change
+        description: "DAU环比绝对变化"
+      - name: dau_change_pct
+        description: "DAU环比变化百分比(%)"
+      - name: dau_anomaly_flag
+        description: "DAU异常标记：normal/abnormal（3σ原则）"
+      - name: conversion_anomaly_flag
+        description: "转化率异常标记"
+      - name: retention_anomaly_flag
+        description: "留存率异常标记"
+      - name: health_score
+        description: "综合健康度评分（0-100）"
+
+  - name: mart_user_segments
+    description: "用户分层宽表：RFM分层结果、用户标签和生命周期阶段，面向业务使用"
+    columns:
+      - name: user_id
+        description: "用户唯一标识"
+        tests:
+          - not_null
+          - unique
+      - name: recency
+        description: "最近一次活跃距今天数"
+      - name: frequency
+        description: "活跃天数"
+      - name: monetary
+        description: "购买次数（价值代理）"
+      - name: r_score
+        description: "R评分（1-5）"
+      - name: f_score
+        description: "F评分（1-5）"
+      - name: m_score
+        description: "M评分（1-5）"
+      - name: rfm_segment
+        description: "RFM分层标签：重要价值用户/重要发展用户/流失风险用户等"
+      - name: value_tier
+        description: "价值等级：高价值/中价值/低价值"
+      - name: activity_label
+        description: "活跃度标签：今日活跃/近期活跃/一般活跃/沉睡用户"
+      - name: behavior_tag
+        description: "行为偏好标签：全链路用户/加购购买型/直接购买型/浏览用户等"
+      - name: lifecycle_stage
+        description: "生命周期阶段：新用户/成长用户/成熟用户/活跃用户/潜在用户"
+      - name: personal_conversion_rate
+        description: "个人购买转化率(%)"

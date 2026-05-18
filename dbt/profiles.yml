@@ -1,0 +1,12 @@
+pdd_ecommerce_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: 'E:\NewWorkProject\PDD\pdd-data-analyst-project\dbt\pdd_analytics.duckdb'
+      threads: 4
+      extensions:
+        - parquet
+      settings:
+        memory_limit: 4GB
+        threads: 4
