@@ -1,8 +1,20 @@
-# Docker Compose for local development
-# Production equivalent: Spark on K8s / dbt Cloud / Streamlit Cloud / Metabase
 version: "3.8"
 
 services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./images:/app/images
+      - ./reports:/app/reports
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "python python/scripts/run_analysis_pipeline.py &&
+             cd dashboard && streamlit run app.py --server.address 0.0.0.0 --server.port 8501"
+
   jupyter:
     image: jupyter/scipy-notebook:latest
     ports:
@@ -11,23 +23,4 @@ services:
       - .:/home/jovyan/work
     environment:
       - JUPYTER_ENABLE_LAB=yes
-    command: start-notebook.sh --NotebookApp.token=''
-
-  streamlit:
-    image: python:3.12-slim
-    ports:
-      - "8501:8501"
-    volumes:
-      - .:/app
-    working_dir: /app
-    command: >
-      sh -c "pip install -r dashboard/requirements.txt &&
-             cd dashboard && streamlit run app.py --server.address 0.0.0.0"
-
-  # DuckDB as lightweight OLAP engine (SQLite alternative)
-  duckdb:
-    image: datacatering/duckdb:latest
-    volumes:
-      - ./data:/data
-      - ./sql:/sql
-    entrypoint: ["duckdb", "/data/processed/analytics.db"]
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
