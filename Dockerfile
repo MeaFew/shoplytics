@@ -26,5 +26,6 @@ VOLUME ["/app/data", "/app/images", "/app/reports"]
 
 EXPOSE 8501 8888
 
-# Default entrypoint: the Prefect flow
-CMD ["python", "orchestration/pipeline_flow.py"]
+# Default entrypoint: Streamlit dashboard (aligned with exposed port 8501)
+# Override via docker-compose for analytics (pipeline) or jupyter (notebook) services
+CMD ["streamlit", "run", "dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]

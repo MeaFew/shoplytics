@@ -12,7 +12,14 @@
 
 import logging
 import os
+import sys
 from pathlib import Path
+
+# 确保能从 dashboard/ 目录运行时找到项目根目录的 config.py
+_dashboard_dir = Path(__file__).parent.resolve()
+_project_root = _dashboard_dir.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 
 import plotly.express as px
 import plotly.graph_objects as go
@@ -258,7 +265,7 @@ def plot_user_activity(df: pl.DataFrame) -> go.Figure:
 
     # 修复：使用左闭右开区间，确保覆盖 0 的情况
     bins = [
-        (0, 10, "1-10"),
+        (0, 10, "0-10"),
         (11, 50, "11-50"),
         (51, 100, "51-100"),
         (101, 500, "101-500"),

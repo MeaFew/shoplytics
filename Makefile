@@ -1,4 +1,4 @@
-.PHONY: setup preprocess sql dbt notebook pipeline dashboard clean
+.PHONY: setup preprocess sql dbt notebook pipeline dashboard test clean
 
 # ============================================================
 # E-commerce User Behavior Analytics — Orchestration
@@ -35,6 +35,9 @@ pipeline:
 
 dashboard:
 	cd dashboard && streamlit run app.py
+
+test:
+	pytest tests/ -v
 
 # Full workflow (local equivalent of a production DAG)
 all: preprocess sql dbt pipeline
