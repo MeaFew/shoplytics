@@ -17,6 +17,16 @@ import os
 import base64
 import io
 from datetime import datetime, timedelta
+from pathlib import Path
+
+# 导入项目配置
+from config import (
+    CLEANED_CSV_PATH,
+    REPORTS_DIR,
+    IMAGES_DIR,
+    START_DATE,
+    END_DATE,
+)
 
 # 设置中文字体
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']
@@ -24,10 +34,9 @@ plt.rcParams['axes.unicode_minus'] = False
 sns.set_style('whitegrid')
 
 # 路径配置
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_PATH = os.path.join(BASE_DIR, 'data', 'processed', 'user_behavior_cleaned.csv')
-REPORT_PATH = os.path.join(BASE_DIR, 'reports', 'daily_report.html')
-IMG_DIR = os.path.join(BASE_DIR, 'images')
+DATA_PATH = str(CLEANED_CSV_PATH)
+REPORT_PATH = str(REPORTS_DIR / 'daily_report.html')
+IMG_DIR = str(IMAGES_DIR)
 os.makedirs(os.path.dirname(REPORT_PATH), exist_ok=True)
 os.makedirs(IMG_DIR, exist_ok=True)
 
