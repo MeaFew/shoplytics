@@ -134,3 +134,12 @@ GROUP BY user_id;
 
 -- 完成提示
 SELECT '数据库表结构、索引和视图创建完成' AS status;
+
+-- --------------------------------------------------------
+-- 数据导入（开发环境：从清洗后的 CSV 加载）
+-- 生产环境：通过 ETL pipeline（Spark / DataX）写入分区表
+-- --------------------------------------------------------
+.mode csv
+.import --skip 1 ../data/processed/user_behavior_cleaned.csv user_behavior
+
+SELECT '数据导入完成' AS status, COUNT(*) AS total_rows FROM user_behavior;
