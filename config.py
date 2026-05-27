@@ -23,6 +23,13 @@ RAW_CSV_PATH = RAW_DATA_DIR / "UserBehavior.csv"
 CLEANED_CSV_PATH = PROCESSED_DATA_DIR / "user_behavior_cleaned.csv"
 CLEANED_PARQUET_PATH = PROCESSED_DATA_DIR / "user_behavior_cleaned.parquet"
 
+# DuckDB 分析数据库
+DUCKDB_PATH = PROCESSED_DATA_DIR / "analytics.duckdb"
+
+# PySpark 路径
+SPARK_INPUT_PATH = PROCESSED_DATA_DIR / "spark_cleaned"
+SPARK_OUTPUT_DIR = PROCESSED_DATA_DIR
+
 # 确保目录存在
 for d in [RAW_DATA_DIR, PROCESSED_DATA_DIR, REPORTS_DIR, IMAGES_DIR]:
     d.mkdir(parents=True, exist_ok=True)

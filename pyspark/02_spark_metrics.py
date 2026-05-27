@@ -19,6 +19,9 @@ PySpark 核心指标计算脚本
 
 import os
 import shutil
+import sys
+from pathlib import Path
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, count, countDistinct, sum as spark_sum, avg,
@@ -26,12 +29,18 @@ from pyspark.sql.functions import (
 )
 from pyspark.sql.window import Window
 
+# 将项目根目录加入 Python 路径，确保能导入 config.py
+project_root = Path(__file__).parents[1].resolve()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from config import SPARK_INPUT_PATH, SPARK_OUTPUT_DIR
+
 # ---------------------------------------------------------------------------
 # 0. 路径配置
 # ---------------------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-INPUT_PATH = os.path.join(BASE_DIR, "data", "processed", "spark_cleaned")
-OUTPUT_PATH = os.path.join(BASE_DIR, "data", "processed", "spark_metrics")
+INPUT_PATH = str(SPARK_INPUT_PATH)
+OUTPUT_PATH = os.path.join(str(SPARK_OUTPUT_DIR), "spark_metrics")
 
 # ---------------------------------------------------------------------------
 # 1. 初始化 SparkSession

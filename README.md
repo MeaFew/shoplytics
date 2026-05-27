@@ -20,15 +20,18 @@ cd ecommerce-user-analytics
 pip install -r requirements.txt
 
 # Preprocess data (Polars: ~0.4s for 29M rows)
-python python/scripts/01_data_preprocessing_polars.py \
+python scripts/preprocess.py \
   --input data/raw/UserBehavior.csv \
   --output data/processed/
 
+# Run SQL analysis on DuckDB
+python scripts/run_sql.py
+
 # Run the full analysis pipeline (EDA + churn model + A/B test + cohort + LTV)
-python python/scripts/run_analysis_pipeline.py
+python scripts/pipeline.py
 
 # Launch interactive dashboard
-cd dashboard && streamlit run app.py
+streamlit run dashboard/app.py
 ```
 
 ---
@@ -52,6 +55,18 @@ cd dashboard && streamlit run app.py
 
 ```
 ecommerce-user-analytics/
+├── scripts/                      # Python utilities (3 scripts)
+│   ├── preprocess.py             #   Polars ETL (~0.4s for 29M rows)
+│   ├── pipeline.py               #   Full analysis pipeline
+│   └── generate_mock.py          #   Mock data generator
+│
+├── notebooks/                    # Jupyter notebooks (5)
+│   ├── 01_eda_and_visualization.ipynb
+│   ├── 02_user_churn_prediction.ipynb
+│   ├── 03_ab_test_analysis.ipynb
+│   ├── 04_recommendation_system.ipynb
+│   └── 05_cohort_and_ltv.ipynb
+│
 ├── sql/                          # SQL analysis (7 scripts)
 │   ├── 01_database_setup.sql     #   Schema + indexes + views
 │   ├── 02_user_retention.sql     #   Retention (D1/D3/D7)
@@ -60,20 +75,6 @@ ecommerce-user-analytics/
 │   ├── 05_ab_test_framework.sql  #   A/B test data prep
 │   ├── 06_anomaly_detection.sql  #   Outlier detection (3σ)
 │   └── 07_product_analysis.sql   #   Product & category
-│
-├── python/
-│   ├── notebooks/                # Jupyter notebooks (5)
-│   │   ├── 01_eda_and_visualization.ipynb
-│   │   ├── 02_user_churn_prediction.ipynb
-│   │   ├── 03_ab_test_analysis.ipynb
-│   │   ├── 04_recommendation_system.ipynb
-│   │   └── 05_cohort_and_ltv.ipynb
-│   └── scripts/                  # Python utilities
-│       ├── 01_data_preprocessing.py
-│       ├── 01_data_preprocessing_polars.py
-│       ├── 02_data_analysis.py
-│       ├── 03_daily_report_generator.py
-│       └── run_analysis_pipeline.py
 │
 ├── dbt/                          # dbt models + tests
 │   ├── models/staging/
@@ -110,7 +111,7 @@ ecommerce-user-analytics/
 | Layer | Tools |
 |-------|-------|
 | Processing | **Polars** (Rust, 60x faster than Pandas) · Pandas · **PySpark** |
-| SQL Engine | SQLite · **DuckDB** (zero-config OLAP) |
+| SQL Engine | **DuckDB** (zero-config OLAP) |
 | Data Engineering | **dbt** (model versioning, testing, lineage) |
 | Modeling | Scikit-learn · **XGBoost** · SciPy |
 | Visualization | Matplotlib · Seaborn · **Plotly** |
@@ -127,7 +128,7 @@ ecommerce-user-analytics/
 | No monetary field | GMV, ARPU, CLV unavailable; RFM degrades to RF | Join with order/transaction table for full RFM |
 | No user attributes | Missing demographics, device, channel segmentation | Join with user profile table for cohort analysis |
 | Simulated A/B test | User-ID hash-based randomization as proxy when true experiment metadata unavailable | Hash-based randomization + SRM check + CUPED variance reduction |
-| Single-node execution | SQLite + local CSV, no distributed query engine | Hive/Spark on partitioned Parquet + Airflow scheduling |
+| Single-node execution | DuckDB + local Parquet, no distributed query engine | Hive/Spark on partitioned Parquet + Airflow scheduling |
 
 > The A/B test framework implements the complete statistical pipeline (sample size calculation → homogeneity check → two-proportion Z-test → Cohen's h → 95% CI) — the parity-based grouping is a **valid** randomization strategy when true experiment metadata is unavailable, and the statistical methodology transfers directly to production experiment platforms.
 

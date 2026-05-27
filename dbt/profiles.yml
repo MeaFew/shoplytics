@@ -3,7 +3,7 @@ pdd_ecommerce_analytics:
   outputs:
     dev:
       type: duckdb
-      path: './pdd_analytics.duckdb'
+      path: '{{ env_var("DBT_DUCKDB_PATH", "data/processed/analytics.duckdb") }}'
       threads: 4
       extensions:
         - parquet

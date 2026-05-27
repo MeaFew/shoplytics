@@ -11,30 +11,24 @@ setup:
 	pip install -r requirements.txt
 
 preprocess:
-	python python/scripts/01_data_preprocessing_polars.py \
+	python scripts/preprocess.py \
 		--input data/raw/UserBehavior.csv \
 		--output data/processed/
 
 sql:
-	sqlite3 data/processed/analytics.db < sql/01_database_setup.sql
-	sqlite3 data/processed/analytics.db < sql/02_user_retention.sql
-	sqlite3 data/processed/analytics.db < sql/03_conversion_funnel.sql
-	sqlite3 data/processed/analytics.db < sql/04_rfm_model.sql
-	sqlite3 data/processed/analytics.db < sql/05_ab_test_framework.sql
-	sqlite3 data/processed/analytics.db < sql/06_anomaly_detection.sql
-	sqlite3 data/processed/analytics.db < sql/07_product_analysis.sql
+	python scripts/run_sql.py
 
 dbt:
 	cd dbt && dbt run && dbt test
 
 notebook:
-	jupyter notebook python/notebooks/
+	jupyter notebook notebooks/
 
 pipeline:
-	python python/scripts/run_analysis_pipeline.py
+	python scripts/pipeline.py
 
 dashboard:
-	cd dashboard && streamlit run app.py
+	streamlit run dashboard/app.py
 
 test:
 	pytest tests/ -v
@@ -43,5 +37,5 @@ test:
 all: preprocess sql dbt pipeline
 
 clean:
-	rm -rf data/processed/*.db
+	rm -rf data/processed/*.duckdb
 	find . -type d -name "__pycache__" -exec rm -rf {} +

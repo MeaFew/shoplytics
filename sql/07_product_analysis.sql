@@ -2,7 +2,7 @@
 -- 脚本名称: 07_product_analysis.sql
 -- 用途: 商品与类目分析（热销、转化、长尾）
 -- 技术点: 窗口函数(RANK) + CTE + 比率计算
--- 运行方式: sqlite3 user_behavior.db < 07_product_analysis.sql
+-- 运行方式: duckdb data/processed/analytics.duckdb < 07_product_analysis.sql
 -- ============================================================
 
 -- --------------------------------------------------------

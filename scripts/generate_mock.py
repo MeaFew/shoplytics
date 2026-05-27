@@ -38,11 +38,8 @@ def generate_mock_data(n_records=100000, random_seed=42):
     """
     np.random.seed(random_seed)
     
-    # 时间范围: 2017-11-25 00:00:00 ~ 2017-12-03 23:59:59
+    # 时间范围起点: 2017-11-25
     start_time = datetime(2017, 11, 25)
-    end_time = datetime(2017, 12, 4)
-    total_seconds = int((end_time - start_time).total_seconds())
-    
     # 用户和商品ID池
     n_users = max(1000, n_records // 100)
     n_items = max(5000, n_records // 20)
@@ -121,14 +118,14 @@ def main():
     df.to_csv(args.output, index=False, header=False)
     
     print(f"✅ 数据已保存至: {args.output}")
-    print(f"\n数据概览:")
+    print("\n数据概览:")
     print(f"  总记录数: {len(df):,}")
     print(f"  用户数: {df['user_id'].nunique():,}")
     print(f"  商品数: {df['item_id'].nunique():,}")
     print(f"  类目数: {df['category_id'].nunique():,}")
-    print(f"\n行为分布:")
+    print("\n行为分布:")
     print(df['behavior_type'].value_counts().to_string())
-    print(f"\n时间范围:")
+    print("\n时间范围:")
     print(f"  开始: {datetime.fromtimestamp(df['timestamp'].min())}")
     print(f"  结束: {datetime.fromtimestamp(df['timestamp'].max())}")
 

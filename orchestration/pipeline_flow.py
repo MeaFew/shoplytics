@@ -33,7 +33,7 @@ def preprocess_data(input_path: str = "data/raw/UserBehavior.csv",
     """Step 1: Clean and preprocess raw user behavior data."""
     import subprocess
     result = subprocess.run([
-        "python", "python/scripts/01_data_preprocessing_polars.py",
+        "python", "scripts/preprocess.py",
         "--input", input_path,
         "--output", output_dir,
     ], capture_output=True, text=True)
@@ -44,16 +44,22 @@ def preprocess_data(input_path: str = "data/raw/UserBehavior.csv",
 
 
 @task(name="run-sql-analysis", retries=1, tags=["sql"])
-def run_sql_analysis(db_path: str = "data/processed/analytics.db"):
+def run_sql_analysis(db_path: str = "data/processed/analytics.duckdb"):
     """Step 2: Execute SQL analysis scripts on the preprocessed data."""
-    import sqlite3, os, glob
-    conn = sqlite3.connect(db_path)
+    import duckdb
+    con = duckdb.connect(db_path)
     sql_dir = Path("sql")
     scripts = sorted(sql_dir.glob("0*.sql"))
     for script in scripts:
         print(f"  Running {script.name}...")
-        conn.executescript(script.read_text(encoding="utf-8"))
-    conn.close()
+        sql = script.read_text(encoding="utf-8")
+        statements = [s.strip() for s in sql.split(";") if s.strip()]
+        for stmt in statements:
+            lines = [ln for ln in stmt.splitlines() if ln.strip() and not ln.strip().startswith("--")]
+            if not lines:
+                continue
+            con.execute(stmt)
+    con.close()
     return f"SQL analysis complete — {len(scripts)} scripts executed"
 
 
@@ -73,7 +79,7 @@ def run_modeling_pipeline():
     """Step 4: Run Python analysis pipeline (EDA, churn, A/B, cohort, LTV)."""
     import subprocess
     result = subprocess.run(
-        ["python", "python/scripts/run_analysis_pipeline.py"],
+        ["python", "scripts/pipeline.py"],
         capture_output=True, text=True
     )
     print(result.stdout[-800:])

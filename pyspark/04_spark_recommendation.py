@@ -22,18 +22,27 @@ PySpark 分布式推荐算法脚本（基于 ALS 矩阵分解）
 import os
 import shutil
 import random
+import sys
+from pathlib import Path
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count, sum as spark_sum, lit, when, monotonically_increasing_id
 from pyspark.ml.recommendation import ALS
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.feature import StringIndexer
 
+# 将项目根目录加入 Python 路径，确保能导入 config.py
+project_root = Path(__file__).parents[1].resolve()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from config import SPARK_INPUT_PATH, SPARK_OUTPUT_DIR
+
 # ---------------------------------------------------------------------------
 # 0. 路径配置与参数
 # ---------------------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-INPUT_PATH = os.path.join(BASE_DIR, "data", "processed", "spark_cleaned")
-OUTPUT_PATH = os.path.join(BASE_DIR, "data", "processed", "recommendation")
+INPUT_PATH = str(SPARK_INPUT_PATH)
+OUTPUT_PATH = os.path.join(str(SPARK_OUTPUT_DIR), "recommendation")
 
 # 推荐参数
 TOP_N = 10              # 为每个用户推荐 Top-N 物品
@@ -275,13 +284,13 @@ item_recs_exploded.coalesce(1).write.mode("overwrite").option("header", "true").
 
 # 10.3 模型评估指标（保存为文本）
 with open(os.path.join(OUTPUT_PATH, "model_metrics.txt"), "w", encoding="utf-8") as f:
-    f.write(f"ALS Model Metrics\n")
-    f.write(f"=================\n")
+    f.write("ALS Model Metrics\n")
+    f.write("=================\n")
     f.write(f"Rank: {RANK}\n")
     f.write(f"MaxIter: {MAX_ITER}\n")
     f.write(f"RegParam: {REG_PARAM}\n")
     f.write(f"Alpha: {ALPHA}\n")
-    f.write(f"ImplicitPrefs: True\n")
+    f.write("ImplicitPrefs: True\n")
     f.write(f"Train Ratio: {TRAIN_RATIO}\n")
     f.write(f"Test RMSE: {rmse:.4f}\n")
     f.write(f"Test MAE: {mae:.4f}\n")

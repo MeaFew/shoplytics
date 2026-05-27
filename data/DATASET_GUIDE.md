@@ -54,11 +54,11 @@ curl -L -o data/raw/UserBehavior.csv \
 pip install -r requirements.txt
 
 # 2. 数据预处理
-python python/scripts/01_data_preprocessing.py
+python scripts/preprocess.py
 
-# 3. 运行SQL分析（需要SQLite/MySQL）
+# 3. 运行SQL分析（需要DuckDB）
 # 详见 sql/README.md
 
 # 4. 运行Python分析
-jupyter notebook python/notebooks/
+jupyter notebook notebooks/
 ```

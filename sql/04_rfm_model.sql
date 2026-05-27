@@ -3,7 +3,7 @@
 -- 用途: 基于Recency和Frequency的用户分层（RF分析）
 -- 说明: 数据集无金额字段，简化为RF模型
 -- 技术点: 窗口函数(NTILE) + CTE
--- 运行方式: sqlite3 user_behavior.db < 04_rfm_model.sql
+-- 运行方式: duckdb data/processed/analytics.duckdb < 04_rfm_model.sql
 -- ============================================================
 -- NOTE: 以下日期硬编码基于数据集时间窗口（2017-11-24 ~ 2017-12-03）。
 -- 若更换数据集，请同步修改 config.py 中的 END_DATE，
@@ -18,7 +18,7 @@ WITH user_stats AS (
         user_id,
         -- Recency: 用户最近一次行为距数据集最后一天（2017-12-03）的天数
         -- 天数越小，用户越活跃
-        JULIANDAY('2017-12-03') - JULIANDAY(MAX(date)) AS recency_days,
+        DATE_DIFF('day', MAX(date), '2017-12-03') AS recency_days,
         -- Frequency: 用户总行为次数
         COUNT(*) AS total_actions,
         -- Frequency: 用户购买次数
@@ -89,7 +89,7 @@ LIMIT 50;  -- 展示TOP50，实际分析时可去掉LIMIT
 WITH user_stats AS (
     SELECT 
         user_id,
-        JULIANDAY('2017-12-03') - JULIANDAY(MAX(date)) AS recency_days,
+        DATE_DIFF('day', MAX(date), '2017-12-03') AS recency_days,
         COUNT(*) AS total_actions,
         SUM(CASE WHEN behavior_type = 'buy' THEN 1 ELSE 0 END) AS buy_count,
         COUNT(DISTINCT date) AS active_days
@@ -143,7 +143,7 @@ ORDER BY user_count DESC;
 WITH user_stats AS (
     SELECT 
         user_id,
-        JULIANDAY('2017-12-03') - JULIANDAY(MAX(date)) AS recency_days,
+        DATE_DIFF('day', MAX(date), '2017-12-03') AS recency_days,
         COUNT(*) AS total_actions,
         SUM(CASE WHEN behavior_type = 'buy' THEN 1 ELSE 0 END) AS buy_count
     FROM user_behavior

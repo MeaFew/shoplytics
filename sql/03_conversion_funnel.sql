@@ -2,7 +2,7 @@
 -- 脚本名称: 03_conversion_funnel.sql
 -- 用途: 构建用户行为转化漏斗，分析各环节转化率
 -- 技术点: CTE + 窗口函数 + 条件聚合
--- 运行方式: sqlite3 user_behavior.db < 03_conversion_funnel.sql
+-- 运行方式: duckdb data/processed/analytics.duckdb < 03_conversion_funnel.sql
 -- ============================================================
 
 -- --------------------------------------------------------

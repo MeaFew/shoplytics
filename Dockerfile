@@ -10,15 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# ---- Layer 1: root Python dependencies ----
+# ---- Layer 1: Python dependencies ----
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ---- Layer 2: dashboard dependencies ----
-COPY dashboard/requirements.txt dashboard/requirements.txt
-RUN pip install --no-cache-dir -r dashboard/requirements.txt
-
-# ---- Layer 3: project source (data excluded via .dockerignore) ----
+# ---- Layer 2: project source (data excluded via .dockerignore) ----
 COPY . .
 
 # Volumes for data persistence

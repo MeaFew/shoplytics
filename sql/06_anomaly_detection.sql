@@ -2,7 +2,7 @@
 -- 脚本名称: 06_anomaly_detection.sql
 -- 用途: 计算每日核心指标并检测异常波动日期
 -- 技术点: 窗口函数(移动平均) + 3σ原则
--- 运行方式: sqlite3 user_behavior.db < 06_anomaly_detection.sql
+-- 运行方式: duckdb data/processed/analytics.duckdb < 06_anomaly_detection.sql
 -- ============================================================
 -- NOTE: 以下周末日期硬编码基于数据集时间窗口（2017-11-24 ~ 2017-12-03）。
 -- 若更换数据集，请同步修改 config.py 中的 START_DATE / END_DATE，
@@ -64,7 +64,7 @@ WITH daily_metrics AS (
 stats AS (
     SELECT 
         AVG(dau) AS avg_dau,
-        -- SQLite标准差计算: sqrt(avg(x^2) - avg(x)^2) 为总体标准差
+        -- 总体标准差计算: sqrt(avg(x^2) - avg(x)^2)
         SQRT(AVG(dau * dau) - AVG(dau) * AVG(dau)) AS std_dau,
         AVG(pv_count) AS avg_pv,
         SQRT(AVG(pv_count * pv_count) - AVG(pv_count) * AVG(pv_count)) AS std_pv,
