@@ -30,8 +30,17 @@ python scripts/run_sql.py
 # Run the full analysis pipeline (EDA + churn model + A/B test + cohort + LTV)
 python scripts/pipeline.py
 
+# Validate processed data
+python scripts/validate_data.py
+
+# Benchmark preprocessing throughput
+python scripts/benchmark_preprocessing.py --pandas
+
 # Launch interactive dashboard
 streamlit run dashboard/app.py
+
+# Run local quality gates (mirrors CI)
+make verify
 ```
 
 ---
@@ -131,6 +140,14 @@ ecommerce-user-analytics/
 | Single-node execution | DuckDB + local Parquet, no distributed query engine | Hive/Spark on partitioned Parquet + Airflow scheduling |
 
 > The A/B test framework implements the complete statistical pipeline (sample size calculation → homogeneity check → two-proportion Z-test → Cohen's h → 95% CI) — the parity-based grouping is a **valid** randomization strategy when true experiment metadata is unavailable, and the statistical methodology transfers directly to production experiment platforms.
+
+---
+
+## Resources
+
+- [`docs/ADR.md`](docs/ADR.md) — Architecture Decision Records: why DuckDB, Polars, dbt, and the flattened directory structure
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — Local setup, development workflow, lint rules, and commit conventions
+- [`sql/README.md`](sql/README.md) — SQL analysis module guide and database compatibility table
 
 ---
 
