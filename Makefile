@@ -1,4 +1,4 @@
-.PHONY: setup preprocess sql dbt notebook pipeline dashboard test clean
+.PHONY: setup preprocess sql dbt notebook pipeline dashboard test verify clean
 
 # ============================================================
 # E-commerce User Behavior Analytics — Orchestration
@@ -32,6 +32,12 @@ dashboard:
 
 test:
 	pytest tests/ -v
+
+verify:
+	ruff check scripts/ dashboard/ pyspark/ --ignore E501,F401,E402
+	sqlfluff lint sql/
+	pytest tests/ -v
+	python scripts/validate_data.py
 
 # Full workflow (local equivalent of a production DAG)
 all: preprocess sql dbt pipeline
