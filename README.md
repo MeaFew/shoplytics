@@ -12,6 +12,9 @@
     <img src="https://img.shields.io/badge/de-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit">
     <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   </p>
+  <p align="center">
+    <b>中文</b> | <a href="./README.en.md">English</a>
+  </p>
 </p>
 
 ---
