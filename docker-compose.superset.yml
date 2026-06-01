@@ -1,0 +1,52 @@
+# Apache Superset + DuckDB 配置
+# 用法:
+#   docker compose -f docker-compose.superset.yml up -d
+#   docker compose -f docker-compose.superset.yml logs -f superset
+# 访问: http://localhost:8088 (admin / admin)
+
+services:
+  superset:
+    image: apache/superset:4.1.2
+    container_name: superset_ecommerce
+    ports:
+      - "8088:8088"
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-dev-key-change-in-production}
+      - DATABASE_DIALECT=sqlite
+      - DATABASE_HOST=/app/superset_home/superset.db
+      - DATABASE_PORT=
+      - DATABASE_DB=superset
+      - DATABASE_USER=
+      - DATABASE_PASSWORD=
+      - PYTHONPATH=/app/pythonpath
+      - TALISMAN_ENABLED=false
+      - WTF_CSRF_ENABLED=false
+      - PREVENT_UNSAFE_DB_CONNECTIONS=false
+      - SUPERSET_LOAD_EXAMPLES=no
+    volumes:
+      # 挂载 DuckDB 数据文件（只读）
+      - ./data/processed/analytics.duckdb:/app/data/analytics.duckdb:ro
+      # 挂载自定义配置
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py
+      - ./superset/add_duckdb.py:/app/pythonpath/add_duckdb.py
+      # 持久化 Superset 元数据
+      - superset_data:/app/superset_home
+    # 安装 duckdb-engine 并启动
+    command: >
+      bash -c "
+        pip install duckdb-engine>=0.10.0 --quiet &&
+        superset db upgrade &&
+        superset fab create-admin --username admin --firstname Admin --lastname User --email admin@example.com --password admin || true &&
+        superset init &&
+        python /app/pythonpath/add_duckdb.py &&
+        superset run -h 0.0.0.0 -p 8088
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  superset_data:

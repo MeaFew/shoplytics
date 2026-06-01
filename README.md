@@ -54,6 +54,10 @@ make all
 # 启动交互式看板
 make dashboard
 
+# 启动 Apache Superset BI 看板（需 Docker）
+docker compose -f docker-compose.superset.yml up -d
+# 访问 http://localhost:8088，用户名 admin / 密码 admin
+
 # 本地质量门（与 CI 完全对齐）
 make verify
 ```
@@ -131,7 +135,7 @@ make verify
 | 数据工程 | **dbt** | 模型版本化、血缘追踪、自动化测试，将分析 SQL 从脚本升级为工程化管线 |
 | 统计建模 | scikit-learn · **XGBoost** · SciPy · statsmodels | XGBoost 处理高维稀疏特征；statsmodels 提供经典统计推断 |
 | 可视化 | Matplotlib · Seaborn · **Plotly** | Plotly 交互式图表直接嵌入 Streamlit |
-| 交付 | **Streamlit** · Jupyter | Streamlit 将分析结果转化为可交互的自助看板 |
+| 交付 | **Streamlit** · **Apache Superset** · Jupyter | Streamlit 做轻量自助看板；Superset（Docker）做企业级 BI 探查 |
 | 质量保障 | pytest · **ruff** · sqlfluff · GitHub Actions | CI 全绿 = 代码规范 + SQL 规范 + Docker 构建三重校验 |
 
 ---
@@ -184,12 +188,47 @@ ecommerce-user-analytics/
 │
 ├── pyspark/                      # PySpark 分布式计算（4 脚本）
 ├── dashboard/                    # Streamlit 交互看板
+├── superset/                     # Apache Superset BI 配置
+│   ├── superset_config.py        #   Superset 自定义配置
+│   └── add_duckdb.py             #   DuckDB 数据源自动注册脚本
 ├── images/                       # 生成的图表
 ├── reports/                      # 分析报告
 ├── docs/                         # 架构决策记录（ADR）
+├── docker-compose.superset.yml   # Superset Docker Compose 配置
 ├── Makefile                      # 工作流编排
 └── requirements.txt
 ```
+
+---
+
+## BI 看板（Apache Superset）
+
+除了 Streamlit 轻量看板，项目还集成了 **Apache Superset**（Docker）作为企业级 BI 探查工具：
+
+```bash
+# 启动 Superset（需 Docker）
+docker compose -f docker-compose.superset.yml up -d
+
+# 首次启动约需 1–2 分钟完成初始化
+# 访问 http://localhost:8088
+# 用户名: admin / 密码: admin
+```
+
+**已预配置内容：**
+- DuckDB 数据源自动连接（`analytics.duckdb`）
+- SQL Lab 可直接对 2,900 万行数据执行 Ad-hoc 查询
+- Explore 界面支持拖拽式图表创建（日活趋势、转化漏斗、品类分布等）
+
+**为什么同时保留 Streamlit + Superset？**
+
+| 维度 | Streamlit | Apache Superset |
+|------|-----------|-----------------|
+| 定位 | 轻量自助看板 | 企业级 BI 探查 |
+| 使用场景 | 固定指标监控 | Ad-hoc 分析、下钻、多维切片 |
+| 开发方式 | Python 代码 | 零代码拖拽 + SQL |
+| 受众 | 产品经理/运营 | 数据分析师/管理层 |
+
+> 生产环境中，Streamlit 适合嵌入业务系统的固定看板，Superset 适合分析师自助探索。两者互补而非替代。
 
 ---
 
