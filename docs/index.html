@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-commerce User Behavior Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+  <!-- Hero -->
+  <section class="relative overflow-hidden bg-white">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <div class="flex flex-col items-center text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium mb-6">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          开源数据分析项目
+        </div>
+        <h1 class="text-5xl font-bold mb-6 leading-tight">
+          E-commerce User Behavior<br>
+          <span class="gradient-text">Analytics</span>
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mb-8">
+          基于 2,900 万条真实淘宝用户行为记录的完整数据分析管线。
+          覆盖数据工程、SQL 分析、统计建模、A/B 测试与交互式交付。
+        </p>
+        <div class="flex gap-4 flex-wrap justify-center">
+          <a href="https://github.com/MeaFew/ecommerce-user-analytics" target="_blank"
+             class="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition">
+            查看 GitHub 仓库
+          </a>
+          <a href="https://github.com/MeaFew/ecommerce-user-analytics#如何验证本项目面试官--你自己" target="_blank"
+             class="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
+            验证指南
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Metrics -->
+  <section class="py-16 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-center mb-12">核心指标</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+        <div class="bg-gray-50 rounded-xl p-6 card-hover">
+          <div class="text-4xl font-bold text-blue-600 mb-2">29M</div>
+          <div class="text-gray-600">用户行为记录</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-6 card-hover">
+          <div class="text-4xl font-bold text-blue-600 mb-2">0.4s</div>
+          <div class="text-gray-600">Polars 清洗耗时</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-6 card-hover">
+          <div class="text-4xl font-bold text-blue-600 mb-2">205K</div>
+          <div class="text-gray-600">日均 DAU</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-6 card-hover">
+          <div class="text-4xl font-bold text-green-600 mb-2">2.24%</div>
+          <div class="text-gray-600">PV→购买转化率</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-6 card-hover">
+          <div class="text-4xl font-bold text-green-600 mb-2">36.04%</div>
+          <div class="text-gray-600">加购→购买转化</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-6 card-hover">
+          <div class="text-4xl font-bold text-purple-600 mb-2">73.54%</div>
+          <div class="text-gray-600">次日留存率</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-center mb-12">技术架构</h2>
+      <div class="bg-white rounded-xl p-8 shadow-sm">
+        <pre class="mermaid">
+flowchart LR
+    A[UserBehavior CSV<br/>29M rows] --> B[Polars ETL<br/>~0.4s]
+    B --> C[DuckDB / Parquet]
+    C --> D[SQL Analysis<br/>7 scripts]
+    C --> E[dbt Models<br/>staging→marts]
+    C --> F[PySpark MLlib<br/>ALS]
+    D --> G[XGBoost<br/>Churn AUC=0.84]
+    E --> H[Streamlit<br/>Dashboard]
+    F --> H
+    G --> H
+    C --> I[Apache Superset<br/>BI Explore]
+        </pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section class="py-16 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-center mb-12">技术栈</h2>
+      <div class="flex flex-wrap gap-3 justify-center">
+        <span class="px-4 py-2 bg-orange-100 text-orange-800 rounded-lg font-medium">Polars</span>
+        <span class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg font-medium">DuckDB</span>
+        <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-medium">dbt</span>
+        <span class="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-medium">XGBoost</span>
+        <span class="px-4 py-2 bg-red-100 text-red-800 rounded-lg font-medium">Streamlit</span>
+        <span class="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg font-medium">Apache Superset</span>
+        <span class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium">PySpark</span>
+        <span class="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-lg font-medium">Plotly</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Verification -->
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-center mb-12">如何验证本项目</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+          <div class="text-2xl font-bold text-blue-600 mb-3">Level 1</div>
+          <div class="text-lg font-semibold mb-2">1 分钟</div>
+          <p class="text-gray-600">查看 README 顶部的实时 CI 徽章，点击可查看每次 lint / sql-lint / docker-build 的完整日志。</p>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+          <div class="text-2xl font-bold text-green-600 mb-3">Level 2</div>
+          <div class="text-lg font-semibold mb-2">3 分钟</div>
+          <p class="text-gray-600">
+            <code>docker compose -f docker-compose.superset.yml up -d</code><br>
+            一个命令启动 BI 看板，浏览器打开即可看到真实数据。
+          </p>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+          <div class="text-2xl font-bold text-purple-600 mb-3">Level 3</div>
+          <div class="text-lg font-semibold mb-2">10 分钟</div>
+          <p class="text-gray-600">
+            <code>make all</code><br>
+            从 raw CSV 到最终报告完整跑通，预期 0.4 秒处理 29M 行。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modules -->
+  <section class="py-16 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-center mb-12">十大分析模块</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">01</div>
+          <div>
+            <div class="font-semibold">用户留存分析</div>
+            <div class="text-gray-600 text-sm">D1/D3/D7 留存曲线，识别流失拐点</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">02</div>
+          <div>
+            <div class="font-semibold">转化漏斗</div>
+            <div class="text-gray-600 text-sm">四步漏斗，定位最大 leak</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">03</div>
+          <div>
+            <div class="font-semibold">RFM 用户分群</div>
+            <div class="text-gray-600 text-sm">8 类用户画像，生命周期状态迁移</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">04</div>
+          <div>
+            <div class="font-semibold">A/B 测试框架</div>
+            <div class="text-gray-600 text-sm">完整统计管线：样本量 → Z 检验 → 效应量</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">05</div>
+          <div>
+            <div class="font-semibold">流失预测</div>
+            <div class="text-gray-600 text-sm">XGBoost AUC = 0.84，精准识别高风险用户</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">06</div>
+          <div>
+            <div class="font-semibold">推荐系统</div>
+            <div class="text-gray-600 text-sm">UserCF + ALS 矩阵分解双方案对比</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">07</div>
+          <div>
+            <div class="font-semibold">异常检测</div>
+            <div class="text-gray-600 text-sm">3σ 规则 + 移动平均，自动化日报告警</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">08</div>
+          <div>
+            <div class="font-semibold">Cohort & LTV</div>
+            <div class="text-gray-600 text-sm">留存热力图 + 行为加权价值估计</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">09</div>
+          <div>
+            <div class="font-semibold">交互看板</div>
+            <div class="text-gray-600 text-sm">Streamlit + Plotly，产品运营自助分析</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600">10</div>
+          <div>
+            <div class="font-semibold">数据工程</div>
+            <div class="text-gray-600 text-sm">dbt 分层 + 7 项数据质量测试</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 bg-gray-900 text-white">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+      <p class="text-gray-400 mb-4">
+        Dataset: Alibaba Tianchi · Code: MIT License
+      </p>
+      <a href="https://github.com/MeaFew/ecommerce-user-analytics" target="_blank"
+         class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        github.com/MeaFew/ecommerce-user-analytics
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+  </script>
+</body>
+</html>
