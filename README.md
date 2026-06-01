@@ -10,6 +10,7 @@
     <img src="https://img.shields.io/badge/code%20style-ruff-000000?logo=ruff&logoColor=white" alt="Ruff">
     <img src="https://img.shields.io/badge/engine-DuckDB-FFF000?logo=duckdb&logoColor=black" alt="DuckDB">
     <img src="https://img.shields.io/badge/de-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit">
+    <a href="https://meafew.github.io/ecommerce-user-analytics/"><img src="https://img.shields.io/badge/pages-live-blue?logo=githubpages&logoColor=white" alt="GitHub Pages"></a>
     <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   </p>
   <p align="center">
