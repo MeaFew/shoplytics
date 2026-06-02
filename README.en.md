@@ -42,53 +42,6 @@
 
 ---
 
-## How to Verify This Project (For Interviewers / Yourself)
-
-> Three levels of verification, from "glance" to "full run", shallow to deep.
-
-### Level 1 — 1 Minute: Badges & Commit History
-
-1. **CI Status**: The ![CI](https://github.com/MeaFew/ecommerce-user-analytics/workflows/CI/badge.svg) badge at the top of the README is **live**. Click it to see full logs of every lint / sql-lint / docker-build run.
-2. **Commit History**: Run `git log --graph --oneline` or view directly on GitHub. 17+ commits progress module by module (preprocessing → SQL → models → dashboard → CI → tests), not a "write everything in one day then backfill dates" fake timeline.
-3. **Code Volume**: Run `cloc .` to see ~3,000+ lines of effective code (excluding notebook outputs and test data), not a skeleton of READMEs + empty files.
-
-### Level 2 — 3 Minutes: One-Command Dashboard Launch
-
-```bash
-git clone https://github.com/MeaFew/ecommerce-user-analytics.git
-cd ecommerce-user-analytics
-
-# Launch Streamlit dashboard (requires Python dependencies)
-make setup && make dashboard
-
-# Or launch Apache Superset BI (requires Docker)
-docker compose -f docker-compose.superset.yml up -d
-# Open http://localhost:8088
-```
-
-If you see an interactive interface with real data (DAU 200K+, 2.24% conversion rate), the data pipeline is alive.
-
-### Level 3 — 10 Minutes: Full Pipeline Run
-
-```bash
-# From raw CSV to final reports, one command
-make all
-
-# Or step by step
-python scripts/preprocess.py --input data/raw/UserBehavior.csv --output data/processed/
-python scripts/run_sql.py
-python scripts/pipeline.py
-```
-
-Expected output:
-- Preprocessing: ~0.4s to clean 29M rows
-- SQL Analysis: 7 scripts execute sequentially, generating DuckDB views
-- Pipeline: Produces results in `reports/` — EDA, churn model, A/B test, cohort analysis, etc.
-
-**If you encounter any issues**, run `make verify` to execute the exact same checks as CI, telling you whether the code, SQL, or Docker setup is out of spec.
-
----
-
 ## Quick Start
 
 ```bash
