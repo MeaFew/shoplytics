@@ -1,0 +1,407 @@
+{
+  "data_overview": {
+    "total_records": 29116710,
+    "total_users": 287004,
+    "total_items": 2584151,
+    "total_categories": 8787,
+    "date_range": {
+      "start": "2017-11-24",
+      "end": "2017-12-03",
+      "days": 10
+    }
+  },
+  "daily_metrics": {
+    "avg_dau": 205091,
+    "avg_pv": 2606836,
+    "avg_buy": 58367,
+    "avg_cart": 161964,
+    "avg_fav": 84504,
+    "avg_conversion_rate": 2.19,
+    "daily_details": [
+      {
+        "date": "2017-11-24",
+        "dau": 47662,
+        "pv": 307905,
+        "buy": 4767,
+        "cart": 18589,
+        "fav": 10210,
+        "conversion_rate": 1.55
+      },
+      {
+        "date": "2017-11-25",
+        "dau": 204404,
+        "pv": 2731483,
+        "buy": 57462,
+        "cart": 165740,
+        "fav": 88189,
+        "conversion_rate": 2.1
+      },
+      {
+        "date": "2017-11-26",
+        "dau": 207226,
+        "pv": 2741867,
+        "buy": 61805,
+        "cart": 168508,
+        "fav": 89428,
+        "conversion_rate": 2.25
+      },
+      {
+        "date": "2017-11-27",
+        "dau": 205951,
+        "pv": 2605745,
+        "buy": 62780,
+        "cart": 157828,
+        "fav": 84097,
+        "conversion_rate": 2.41
+      },
+      {
+        "date": "2017-11-28",
+        "dau": 205809,
+        "pv": 2572864,
+        "buy": 61094,
+        "cart": 156601,
+        "fav": 84288,
+        "conversion_rate": 2.37
+      },
+      {
+        "date": "2017-11-29",
+        "dau": 208758,
+        "pv": 2678372,
+        "buy": 64470,
+        "cart": 162438,
+        "fav": 87875,
+        "conversion_rate": 2.41
+      },
+      {
+        "date": "2017-11-30",
+        "dau": 212246,
+        "pv": 2743992,
+        "buy": 64641,
+        "cart": 167723,
+        "fav": 88658,
+        "conversion_rate": 2.36
+      },
+      {
+        "date": "2017-12-01",
+        "dau": 218630,
+        "pv": 2915383,
+        "buy": 62140,
+        "cart": 187995,
+        "fav": 92760,
+        "conversion_rate": 2.13
+      },
+      {
+        "date": "2017-12-02",
+        "dau": 273681,
+        "pv": 3645178,
+        "buy": 75735,
+        "cart": 235242,
+        "fav": 119589,
+        "conversion_rate": 2.08
+      },
+      {
+        "date": "2017-12-03",
+        "dau": 266543,
+        "pv": 3125574,
+        "buy": 68774,
+        "cart": 198978,
+        "fav": 99943,
+        "conversion_rate": 2.2
+      }
+    ]
+  },
+  "behavior_distribution": {
+    "pv": {
+      "count": 26068363,
+      "pct": 89.53
+    },
+    "cart": {
+      "count": 1619642,
+      "pct": 5.56
+    },
+    "fav": {
+      "count": 845037,
+      "pct": 2.9
+    },
+    "buy": {
+      "count": 583668,
+      "pct": 2.0
+    }
+  },
+  "retention": {
+    "avg_d1_retention": 73.54,
+    "details": [
+      {
+        "date": "2017-11-24",
+        "new_users": 47662,
+        "retained": 40428,
+        "rate": 84.82
+      },
+      {
+        "date": "2017-11-25",
+        "new_users": 163976,
+        "retained": 125512,
+        "rate": 76.54
+      },
+      {
+        "date": "2017-11-26",
+        "new_users": 41832,
+        "retained": 26709,
+        "rate": 63.85
+      },
+      {
+        "date": "2017-11-27",
+        "new_users": 17474,
+        "retained": 10650,
+        "rate": 60.95
+      },
+      {
+        "date": "2017-11-28",
+        "new_users": 8601,
+        "retained": 5298,
+        "rate": 61.6
+      },
+      {
+        "date": "2017-11-29",
+        "new_users": 4912,
+        "retained": 3396,
+        "rate": 69.14
+      },
+      {
+        "date": "2017-11-30",
+        "new_users": 2487,
+        "retained": 2242,
+        "rate": 90.15
+      },
+      {
+        "date": "2017-12-01",
+        "new_users": 52,
+        "retained": 48,
+        "rate": 92.31
+      },
+      {
+        "date": "2017-12-02",
+        "new_users": 8,
+        "retained": 5,
+        "rate": 62.5
+      }
+    ]
+  },
+  "conversion_funnel": {
+    "users": {
+      "pv_users": 285815,
+      "fav_users": 113717,
+      "cart_users": 215167,
+      "buy_users": 195078
+    },
+    "actions": {
+      "total_pv": 26068363,
+      "total_fav": 845037,
+      "total_cart": 1619642,
+      "total_buy": 583668,
+      "pv_to_buy_rate": 2.24,
+      "pv_to_cart_rate": 6.21,
+      "pv_to_fav_rate": 3.24,
+      "cart_to_buy_rate": 36.04
+    }
+  },
+  "top_categories": [
+    {
+      "category_id": 1464116,
+      "buy_count": 10259,
+      "pv_count": 203191,
+      "item_count": 14374,
+      "conversion_rate": 5.05
+    },
+    {
+      "category_id": 2735466,
+      "buy_count": 9937,
+      "pv_count": 327892,
+      "item_count": 13011,
+      "conversion_rate": 3.03
+    },
+    {
+      "category_id": 4145813,
+      "buy_count": 9382,
+      "pv_count": 930827,
+      "item_count": 47592,
+      "conversion_rate": 1.01
+    },
+    {
+      "category_id": 2885642,
+      "buy_count": 9125,
+      "pv_count": 279390,
+      "item_count": 34008,
+      "conversion_rate": 3.27
+    },
+    {
+      "category_id": 4756105,
+      "buy_count": 8310,
+      "pv_count": 1328677,
+      "item_count": 35480,
+      "conversion_rate": 0.63
+    },
+    {
+      "category_id": 4801426,
+      "buy_count": 7762,
+      "pv_count": 547387,
+      "item_count": 33225,
+      "conversion_rate": 1.42
+    },
+    {
+      "category_id": 982926,
+      "buy_count": 7228,
+      "pv_count": 820787,
+      "item_count": 38521,
+      "conversion_rate": 0.88
+    },
+    {
+      "category_id": 2640118,
+      "buy_count": 5248,
+      "pv_count": 211484,
+      "item_count": 16503,
+      "conversion_rate": 2.48
+    },
+    {
+      "category_id": 4159072,
+      "buy_count": 5109,
+      "pv_count": 54793,
+      "item_count": 6260,
+      "conversion_rate": 9.32
+    },
+    {
+      "category_id": 1320293,
+      "buy_count": 4931,
+      "pv_count": 520096,
+      "item_count": 36765,
+      "conversion_rate": 0.95
+    }
+  ],
+  "top_items": [
+    {
+      "item_id": 3122135,
+      "buy_count": 410,
+      "pv_count": 535,
+      "conversion_rate": 0.7664
+    },
+    {
+      "item_id": 3031354,
+      "buy_count": 247,
+      "pv_count": 5100,
+      "conversion_rate": 0.0484
+    },
+    {
+      "item_id": 2560262,
+      "buy_count": 208,
+      "pv_count": 3157,
+      "conversion_rate": 0.0659
+    },
+    {
+      "item_id": 3964583,
+      "buy_count": 205,
+      "pv_count": 1426,
+      "conversion_rate": 0.1438
+    },
+    {
+      "item_id": 2964774,
+      "buy_count": 197,
+      "pv_count": 2017,
+      "conversion_rate": 0.0977
+    },
+    {
+      "item_id": 1910706,
+      "buy_count": 166,
+      "pv_count": 498,
+      "conversion_rate": 0.3333
+    },
+    {
+      "item_id": 740947,
+      "buy_count": 161,
+      "pv_count": 2258,
+      "conversion_rate": 0.0713
+    },
+    {
+      "item_id": 1116492,
+      "buy_count": 156,
+      "pv_count": 262,
+      "conversion_rate": 0.5954
+    },
+    {
+      "item_id": 1415828,
+      "buy_count": 155,
+      "pv_count": 841,
+      "conversion_rate": 0.1843
+    },
+    {
+      "item_id": 1034594,
+      "buy_count": 148,
+      "pv_count": 201,
+      "conversion_rate": 0.7363
+    },
+    {
+      "item_id": 705557,
+      "buy_count": 148,
+      "pv_count": 2804,
+      "conversion_rate": 0.0528
+    },
+    {
+      "item_id": 4443059,
+      "buy_count": 145,
+      "pv_count": 4206,
+      "conversion_rate": 0.0345
+    },
+    {
+      "item_id": 3189426,
+      "buy_count": 137,
+      "pv_count": 1003,
+      "conversion_rate": 0.1366
+    },
+    {
+      "item_id": 1168232,
+      "buy_count": 136,
+      "pv_count": 894,
+      "conversion_rate": 0.1521
+    },
+    {
+      "item_id": 2955846,
+      "buy_count": 127,
+      "pv_count": 513,
+      "conversion_rate": 0.2476
+    },
+    {
+      "item_id": 4219087,
+      "buy_count": 125,
+      "pv_count": 1230,
+      "conversion_rate": 0.1016
+    },
+    {
+      "item_id": 257772,
+      "buy_count": 122,
+      "pv_count": 747,
+      "conversion_rate": 0.1633
+    },
+    {
+      "item_id": 3677861,
+      "buy_count": 120,
+      "pv_count": 1507,
+      "conversion_rate": 0.0796
+    },
+    {
+      "item_id": 3503155,
+      "buy_count": 120,
+      "pv_count": 720,
+      "conversion_rate": 0.1667
+    },
+    {
+      "item_id": 265985,
+      "buy_count": 119,
+      "pv_count": 1349,
+      "conversion_rate": 0.0882
+    }
+  ],
+  "long_tail": {
+    "median_pv": 2.0,
+    "zero_convert_count": 960744,
+    "top20_contrib_pct": 0.57
+  }
+}

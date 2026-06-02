@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电商用户行为分析 — 交互式数据看板</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+    .chart-container { min-height: 320px; }
+    .filter-btn { transition: all 0.15s ease; }
+    .filter-btn.active { background-color: #0f172a; color: white; border-color: #0f172a; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-lg">E</div>
+        <div>
+          <h1 class="text-lg font-bold text-gray-900 leading-tight">电商用户行为分析</h1>
+          <p class="text-xs text-gray-500">交互式数据看板 · 2,900 万行真实数据</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="./index.html" class="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">← 返回项目主页</a>
+        <a href="https://github.com/MeaFew/ecommerce-user-analytics" target="_blank" class="text-sm bg-slate-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <div class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-wrap items-center gap-4">
+        <span class="text-sm font-medium text-gray-700">行为类型筛选：</span>
+        <div class="flex gap-2" id="behaviorFilters">
+          <button class="filter-btn active px-3 py-1.5 text-sm rounded-md border border-gray-300 font-medium" data-behavior="pv">浏览 (PV)</button>
+          <button class="filter-btn active px-3 py-1.5 text-sm rounded-md border border-gray-300 font-medium" data-behavior="fav">收藏</button>
+          <button class="filter-btn active px-3 py-1.5 text-sm rounded-md border border-gray-300 font-medium" data-behavior="cart">加购</button>
+          <button class="filter-btn active px-3 py-1.5 text-sm rounded-md border border-gray-300 font-medium" data-behavior="buy">购买</button>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="text-sm font-medium text-gray-700">日期范围：</span>
+          <select id="dateRange" class="text-sm border border-gray-300 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-slate-500">
+            <option value="all">全部 10 天</option>
+            <option value="core">核心 8 天 (11-25 ~ 12-03)</option>
+            <option value="weekend">周末 (12-02 ~ 12-03)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div class="card bg-white rounded-xl p-4 border border-gray-100">
+        <p class="text-xs text-gray-500 font-medium mb-1">总记录数</p>
+        <p class="text-xl font-bold text-gray-900">2,912 万</p>
+        <p class="text-xs text-gray-400 mt-1">9 天有效窗口</p>
+      </div>
+      <div class="card bg-white rounded-xl p-4 border border-gray-100">
+        <p class="text-xs text-gray-500 font-medium mb-1">总用户数</p>
+        <p class="text-xl font-bold text-gray-900">28.7 万</p>
+        <p class="text-xs text-gray-400 mt-1">去重用户</p>
+      </div>
+      <div class="card bg-white rounded-xl p-4 border border-gray-100">
+        <p class="text-xs text-gray-500 font-medium mb-1">平均 DAU</p>
+        <p class="text-xl font-bold text-blue-600">20.5 万</p>
+        <p class="text-xs text-gray-400 mt-1">日均活跃用户</p>
+      </div>
+      <div class="card bg-white rounded-xl p-4 border border-gray-100">
+        <p class="text-xs text-gray-500 font-medium mb-1">总购买量</p>
+        <p class="text-xl font-bold text-emerald-600">58.4 万</p>
+        <p class="text-xs text-gray-400 mt-1">购买行为数</p>
+      </div>
+      <div class="card bg-white rounded-xl p-4 border border-gray-100">
+        <p class="text-xs text-gray-500 font-medium mb-1">PV→购买转化率</p>
+        <p class="text-xl font-bold text-amber-600">2.24%</p>
+        <p class="text-xs text-gray-400 mt-1">全链路转化</p>
+      </div>
+      <div class="card bg-white rounded-xl p-4 border border-gray-100">
+        <p class="text-xs text-gray-500 font-medium mb-1">D1 留存率</p>
+        <p class="text-xl font-bold text-purple-600">73.5%</p>
+        <p class="text-xs text-gray-400 mt-1">次日平均留存</p>
+      </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card bg-white rounded-xl border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-bold text-gray-900">📈 日活与核心指标趋势</h3>
+          <select id="trendMetric" class="text-xs border border-gray-300 rounded-md px-2 py-1 bg-white">
+            <option value="dau">DAU</option>
+            <option value="pv">PV</option>
+            <option value="buy">购买</option>
+            <option value="cart">加购</option>
+            <option value="fav">收藏</option>
+          </select>
+        </div>
+        <div id="chartTrend" class="chart-container"></div>
+      </div>
+
+      <div class="card bg-white rounded-xl border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">⏰ 24 小时行为分布</h3>
+        <div id="chartHour" class="chart-container"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div class="card bg-white rounded-xl border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">🥧 行为类型占比</h3>
+        <div id="chartPie" class="chart-container"></div>
+      </div>
+
+      <div class="card bg-white rounded-xl border border-gray-100 p-5 lg:col-span-2">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">🔄 用户转化漏斗</h3>
+        <div id="chartFunnel" class="chart-container"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 3 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card bg-white rounded-xl border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">📊 D1 次日留存率</h3>
+        <div id="chartRetention" class="chart-container"></div>
+      </div>
+
+      <div class="card bg-white rounded-xl border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">🏆 品类转化率 TOP10</h3>
+        <div id="chartCategory" class="chart-container"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-xs text-gray-400 py-6 border-t border-gray-200 mt-8">
+      <p>数据来源：阿里云天池 — 电商用户行为数据集（2,900 万行） · 分析工具：Polars / DuckDB / ECharts</p>
+      <p class="mt-1">本看板为纯前端实现，所有数据已预计算为静态 JSON，筛选与交互在浏览器本地完成</p>
+    </div>
+  </main>
+
+  <script>
+    // ============================================
+    // Data loading and state management
+    // ============================================
+    let dashboardData = null;
+    let reportData = null;
+    let activeBehaviors = new Set(['pv', 'fav', 'cart', 'buy']);
+    let dateFilter = 'all';
+
+    const behaviorColors = {
+      pv: '#3b82f6',
+      fav: '#f59e0b',
+      cart: '#8b5cf6',
+      buy: '#10b981'
+    };
+
+    const behaviorLabels = {
+      pv: '浏览',
+      fav: '收藏',
+      cart: '加购',
+      buy: '购买'
+    };
+
+    async function loadData() {
+      const [dashRes, reportRes] = await Promise.all([
+        fetch('./data/dashboard_data.json').then(r => r.json()),
+        fetch('./data/report_data.json').then(r => r.json())
+      ]);
+      dashboardData = dashRes;
+      reportData = reportRes;
+      renderAll();
+    }
+
+    function getFilteredDaily() {
+      if (!dashboardData) return [];
+      let data = [...dashboardData.daily_behavior];
+      if (dateFilter === 'core') {
+        data = data.filter(d => d.date >= '2017-11-25');
+      } else if (dateFilter === 'weekend') {
+        data = data.filter(d => d.date >= '2017-12-02');
+      }
+      return data;
+    }
+
+    function getFilteredDau() {
+      if (!dashboardData) return [];
+      let data = [...dashboardData.dau];
+      if (dateFilter === 'core') {
+        data = data.filter(d => d.date >= '2017-11-25');
+      } else if (dateFilter === 'weekend') {
+        data = data.filter(d => d.date >= '2017-12-02');
+      }
+      return data;
+    }
+
+    // ============================================
+    // Charts
+    // ============================================
+    const charts = {};
+
+    function initCharts() {
+      charts.trend = echarts.init(document.getElementById('chartTrend'));
+      charts.hour = echarts.init(document.getElementById('chartHour'));
+      charts.pie = echarts.init(document.getElementById('chartPie'));
+      charts.funnel = echarts.init(document.getElementById('chartFunnel'));
+      charts.retention = echarts.init(document.getElementById('chartRetention'));
+      charts.category = echarts.init(document.getElementById('chartCategory'));
+      window.addEventListener('resize', () => Object.values(charts).forEach(c => c.resize()));
+    }
+
+    function renderTrend() {
+      const daily = getFilteredDaily();
+      const dauData = getFilteredDau();
+      const metric = document.getElementById('trendMetric').value;
+      const dates = daily.map(d => d.date.slice(5));
+
+      const series = [];
+      if (metric === 'dau') {
+        series.push({
+          name: 'DAU',
+          type: 'line',
+          data: dauData.map(d => d.dau),
+          smooth: true,
+          lineStyle: { width: 3, color: '#3b82f6' },
+          itemStyle: { color: '#3b82f6' },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(59,130,246,0.2)' }, { offset: 1, color: 'rgba(59,130,246,0)' }] } }
+        });
+      } else {
+        series.push({
+          name: behaviorLabels[metric],
+          type: 'bar',
+          data: daily.map(d => d[metric]),
+          itemStyle: { color: behaviorColors[metric], borderRadius: [4, 4, 0, 0] }
+        });
+      }
+
+      charts.trend.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+        xAxis: { type: 'category', data: dates, axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280' } },
+        yAxis: { type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6' } }, axisLabel: { color: '#6b7280', formatter: v => v >= 10000 ? (v/10000).toFixed(0) + '万' : v } },
+        series
+      }, true);
+    }
+
+    function renderHour() {
+      const hours = dashboardData.hour_distribution;
+      const series = Array.from(activeBehaviors).map(b => ({
+        name: behaviorLabels[b],
+        type: 'bar',
+        stack: 'total',
+        data: hours.map(h => h[b]),
+        itemStyle: { color: behaviorColors[b] }
+      }));
+
+      charts.hour.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        legend: { data: Array.from(activeBehaviors).map(b => behaviorLabels[b]), bottom: 0, textStyle: { fontSize: 11 } },
+        grid: { left: '3%', right: '4%', bottom: '15%', top: '5%', containLabel: true },
+        xAxis: { type: 'category', data: hours.map(h => h.hour + ':00'), axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', interval: 2 } },
+        yAxis: { type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6' } }, axisLabel: { color: '#6b7280', formatter: v => v >= 10000 ? (v/10000).toFixed(0) + '万' : v } },
+        series
+      }, true);
+    }
+
+    function renderPie() {
+      const daily = getFilteredDaily();
+      const totals = { pv: 0, fav: 0, cart: 0, buy: 0 };
+      daily.forEach(d => {
+        Array.from(activeBehaviors).forEach(b => totals[b] += d[b]);
+      });
+      const data = Array.from(activeBehaviors).map(b => ({
+        name: behaviorLabels[b],
+        value: totals[b],
+        itemStyle: { color: behaviorColors[b] }
+      }));
+
+      charts.pie.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+        legend: { orient: 'vertical', left: 'left', textStyle: { fontSize: 11 } },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['60%', '50%'],
+          avoidLabelOverlap: false,
+          itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+          label: { show: false },
+          emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+          data
+        }]
+      }, true);
+    }
+
+    function renderFunnel() {
+      const funnel = reportData.conversion_funnel.users;
+      const data = [
+        { value: funnel.pv_users, name: '浏览用户', itemStyle: { color: '#3b82f6' } },
+        { value: funnel.fav_users, name: '收藏用户', itemStyle: { color: '#f59e0b' } },
+        { value: funnel.cart_users, name: '加购用户', itemStyle: { color: '#8b5cf6' } },
+        { value: funnel.buy_users, name: '购买用户', itemStyle: { color: '#10b981' } }
+      ];
+
+      charts.funnel.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} 人' },
+        series: [{
+          type: 'funnel',
+          left: '10%',
+          top: '5%',
+          bottom: '5%',
+          width: '80%',
+          min: 0,
+          max: funnel.pv_users,
+          minSize: '0%',
+          maxSize: '100%',
+          sort: 'descending',
+          gap: 2,
+          label: { show: true, position: 'inside', formatter: '{b}\n{c}', fontSize: 11 },
+          labelLine: { length: 10, lineStyle: { width: 1, type: 'solid' } },
+          itemStyle: { borderColor: '#fff', borderWidth: 1 },
+          emphasis: { label: { fontSize: 14 } },
+          data
+        }]
+      }, true);
+    }
+
+    function renderRetention() {
+      const retention = reportData.retention.details;
+      const data = retention.map(r => ({
+        date: r.date.slice(5),
+        rate: r.rate,
+        users: r.new_users,
+        retained: r.retained
+      }));
+
+      charts.retention.setOption({
+        tooltip: { trigger: 'axis', formatter: p => {
+          const d = data[p[0].dataIndex];
+          return `${d.date}<br/>新增: ${d.users.toLocaleString()}<br/>留存: ${d.retained.toLocaleString()}<br/>留存率: ${d.rate}%`;
+        }},
+        grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+        xAxis: { type: 'category', data: data.map(d => d.date), axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280' } },
+        yAxis: { type: 'value', max: 100, axisLine: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6' } }, axisLabel: { color: '#6b7280', formatter: '{value}%' } },
+        series: [{
+          type: 'bar',
+          data: data.map(d => ({ value: d.rate, itemStyle: { color: d.rate >= 70 ? '#10b981' : d.rate >= 60 ? '#f59e0b' : '#ef4444' } })),
+          barWidth: '50%',
+          itemStyle: { borderRadius: [4, 4, 0, 0] },
+          label: { show: true, position: 'top', formatter: '{c}%', fontSize: 10, color: '#6b7280' }
+        }]
+      }, true);
+    }
+
+    function renderCategory() {
+      const cats = reportData.top_categories.slice(0, 10);
+      charts.category.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => {
+          const c = cats[p[0].dataIndex];
+          return `品类 ${c.category_id}<br/>购买: ${c.buy_count.toLocaleString()}<br/>浏览: ${c.pv_count.toLocaleString()}<br/>转化率: ${c.conversion_rate}%`;
+        }},
+        grid: { left: '3%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
+        xAxis: { type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6' } }, axisLabel: { color: '#6b7280' } },
+        yAxis: { type: 'category', data: cats.map(c => `品类 ${String(c.category_id).slice(-4)}`).reverse(), axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', fontSize: 10 } },
+        series: [{
+          type: 'bar',
+          data: cats.map(c => ({ value: c.conversion_rate, itemStyle: { color: c.conversion_rate >= 3 ? '#10b981' : c.conversion_rate >= 1.5 ? '#3b82f6' : '#f59e0b' } })).reverse(),
+          barWidth: '60%',
+          itemStyle: { borderRadius: [0, 4, 4, 0] },
+          label: { show: true, position: 'right', formatter: '{c}%', fontSize: 10, color: '#6b7280' }
+        }]
+      }, true);
+    }
+
+    function renderAll() {
+      renderTrend();
+      renderHour();
+      renderPie();
+      renderFunnel();
+      renderRetention();
+      renderCategory();
+    }
+
+    // ============================================
+    // Event listeners
+    // ============================================
+    document.getElementById('behaviorFilters').addEventListener('click', e => {
+      if (!e.target.classList.contains('filter-btn')) return;
+      const b = e.target.dataset.behavior;
+      if (activeBehaviors.has(b) && activeBehaviors.size > 1) {
+        activeBehaviors.delete(b);
+        e.target.classList.remove('active');
+      } else if (!activeBehaviors.has(b)) {
+        activeBehaviors.add(b);
+        e.target.classList.add('active');
+      }
+      renderHour();
+      renderPie();
+    });
+
+    document.getElementById('dateRange').addEventListener('change', e => {
+      dateFilter = e.target.value;
+      renderTrend();
+      renderPie();
+    });
+
+    document.getElementById('trendMetric').addEventListener('change', () => renderTrend());
+
+    // ============================================
+    // Init
+    // ============================================
+    initCharts();
+    loadData();
+  </script>
+</body>
+</html>
