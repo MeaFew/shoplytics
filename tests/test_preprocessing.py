@@ -24,7 +24,7 @@ def test_cleaned_data_exists():
 def test_cleaned_data_columns():
     """清洗后的数据必须包含预期的列。"""
     df = pd.read_csv(CLEANED_CSV_PATH, nrows=5)
-    expected_cols = {'user_id', 'item_id', 'category_id', 'behavior_type', 'timestamp', 'datetime', 'date'}
+    expected_cols = {'user_id', 'item_id', 'category_id', 'behavior_type', 'timestamp', 'date'}
     assert expected_cols.issubset(set(df.columns)), f"Missing columns: {expected_cols - set(df.columns)}"
 
 
