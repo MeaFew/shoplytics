@@ -300,9 +300,10 @@
 
     function renderFunnel() {
       const funnel = reportData.conversion_funnel.users;
+      // 核心转化路径：浏览 → 加购 → 购买
+      // 收藏是并行行为，不放在线性漏斗中
       const data = [
         { value: funnel.pv_users, name: '浏览用户', itemStyle: { color: '#3b82f6' } },
-        { value: funnel.fav_users, name: '收藏用户', itemStyle: { color: '#f59e0b' } },
         { value: funnel.cart_users, name: '加购用户', itemStyle: { color: '#8b5cf6' } },
         { value: funnel.buy_users, name: '购买用户', itemStyle: { color: '#10b981' } }
       ];
@@ -319,7 +320,7 @@
           max: funnel.pv_users,
           minSize: '0%',
           maxSize: '100%',
-          sort: 'descending',
+          sort: 'none',
           gap: 2,
           label: { show: true, position: 'inside', formatter: '{b}\n{c}', fontSize: 11 },
           labelLine: { length: 10, lineStyle: { width: 1, type: 'solid' } },
