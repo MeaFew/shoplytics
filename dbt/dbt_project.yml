@@ -1,8 +1,8 @@
-name: 'pdd_ecommerce_analytics'
+name: 'ecommerce_analytics'
 version: '1.0.0'
 config-version: 2
 
-profile: 'pdd_ecommerce_analytics'
+profile: 'ecommerce_analytics'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -22,7 +22,7 @@ vars:
   end_date: '2017-12-03'
 
 models:
-  pdd_ecommerce_analytics:
+  ecommerce_analytics:
     staging:
       +materialized: view
       +schema: staging

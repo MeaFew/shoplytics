@@ -1,4 +1,4 @@
-pdd_ecommerce_analytics:
+ecommerce_analytics:
   target: dev
   outputs:
     dev:

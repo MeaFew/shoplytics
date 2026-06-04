@@ -28,10 +28,6 @@ pyspark>=3.2.0,<3.6.0
 jupyter>=1.0.0,<2.0.0
 notebook>=6.4.0,<7.0.0
 
-# Dashboard (原 dashboard/requirements.txt，已合并)
-streamlit>=1.30.0,<2.0.0
-plotly>=5.3.0,<6.0.0
-
 # 开发依赖（可选，用于代码质量和测试）
 # pytest>=7.0.0
 # black>=23.0.0
