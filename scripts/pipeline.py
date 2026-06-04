@@ -588,7 +588,7 @@ summary = {
         "xgb_auc": round(xgb_auc, 4),
         "lr_auc": round(lr_auc, 4),
         "ab_test_p_value": round(p_value, 4),
-        "ab_test_significant": p_value < 0.05,
+        "ab_test_significant": bool(p_value < 0.05),
         "srm_p_value": round(srm_pvalue, 4),
         "usercf_precision_at_10": round(prec, 4),
         "top_20_ltv_contribution_pct": round(tier_contrib["Top 20%"], 1),
