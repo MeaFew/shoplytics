@@ -17,13 +17,10 @@ import time
 # 项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 IMG_DIR = os.path.join(PROJECT_ROOT, "images")
-DATA_PATH_POLARS = os.path.join(PROJECT_ROOT, "data", "processed", "user_behavior_cleaned_polars.csv")
-DATA_PATH_PANDAS = os.path.join(PROJECT_ROOT, "data", "processed", "user_behavior_cleaned.csv")
+DATA_PATH = os.path.join(PROJECT_ROOT, "data", "processed", "user_behavior_cleaned.csv")
 
 os.makedirs(IMG_DIR, exist_ok=True)
 
-# 选择数据文件
-DATA_PATH = DATA_PATH_POLARS if os.path.exists(DATA_PATH_POLARS) else DATA_PATH_PANDAS
 if not os.path.exists(DATA_PATH):
     print(f"[ERROR] 数据文件不存在: {DATA_PATH}")
     print("请先运行数据预处理脚本生成清洗数据")

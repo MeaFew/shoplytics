@@ -237,7 +237,7 @@ def save_processed_data(df: pl.DataFrame, output_dir: str | Path) -> str:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    output_path = output_dir / "user_behavior_cleaned_polars.csv"
+    output_path = output_dir / "user_behavior_cleaned.csv"
     print(f"\n正在保存清洗数据: {output_path}")
     df.write_csv(output_path)
     print(f"[OK] 清洗数据已保存: {output_path}")
@@ -463,7 +463,7 @@ def main() -> None:
     print("[DONE] Polars 数据预处理全部完成！")
     print("=" * 50)
     print(f"\n输出文件:")
-    print(f"  - 清洗数据: {output_dir / 'user_behavior_cleaned_polars.csv'}")
+    print(f"  - 清洗数据: {output_dir / 'user_behavior_cleaned.csv'}")
     print(f"  - 摘要报告: {output_dir / 'preprocessing_report_polars.md'}")
 
 
