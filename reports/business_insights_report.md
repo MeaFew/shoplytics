@@ -532,13 +532,13 @@ LTV = 行为价值得分 × 外推系数(30天/10天=3)
 
 ```bash
 # 运行真实数据分析脚本
-python python/scripts/run_real_data_analysis_v2.py
+python scripts/pipeline.py
 
 # 运行 SQL 分析
-sqlite3 user_behavior.db < sql/07_product_analysis.sql
+duckdb data/processed/analytics.duckdb < sql/07_product_analysis.sql
 
 # 运行 Python 建模
-jupyter notebook python/notebooks/02_user_churn_prediction.ipynb
+jupyter notebook notebooks/02_user_churn_prediction.ipynb
 ```
 
 分析结果保存于 `reports/real_data_results.json`，图表保存于 `images/` 目录。

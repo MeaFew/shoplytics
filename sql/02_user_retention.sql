@@ -2,7 +2,7 @@
 -- 脚本名称: 02_user_retention.sql
 -- 用途: 计算每日新增用户及次日/3日/7日留存率
 -- 技术点: 自连接 + 窗口函数
--- 运行方式: sqlite3 user_behavior.db < 02_user_retention.sql
+-- 运行方式: duckdb data/processed/analytics.duckdb < 02_user_retention.sql
 -- ============================================================
 
 -- --------------------------------------------------------
@@ -53,7 +53,7 @@ retention_base AS (
         f.first_date,
         a.active_date,
         -- 计算与首日的间隔天数
-        JULIANDAY(a.active_date) - JULIANDAY(f.first_date) AS day_diff
+        DATE_DIFF('day', f.first_date, a.active_date) AS day_diff
     FROM user_first_active f
     LEFT JOIN user_active_dates a 
         ON f.user_id = a.user_id
@@ -109,7 +109,7 @@ retention_matrix AS (
         f.user_id,
         f.first_date,
         a.active_date,
-        JULIANDAY(a.active_date) - JULIANDAY(f.first_date) AS day_diff,
+        DATE_DIFF('day', f.first_date, a.active_date) AS day_diff,
         -- 窗口函数: 在用户的所有活跃记录中，给每条记录打序号
         ROW_NUMBER() OVER (
             PARTITION BY f.user_id 
@@ -159,7 +159,7 @@ user_active_dates AS (
 retention_trend AS (
     SELECT 
         f.first_date,
-        JULIANDAY(a.active_date) - JULIANDAY(f.first_date) AS day_diff,
+        DATE_DIFF('day', f.first_date, a.active_date) AS day_diff,
         COUNT(DISTINCT f.user_id) AS cohort_size,
         COUNT(DISTINCT CASE WHEN a.active_date IS NOT NULL THEN f.user_id END) AS retained_users
     FROM user_first_active f

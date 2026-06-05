@@ -2,7 +2,7 @@
 -- 脚本名称: 01_database_setup.sql
 -- 用途: 创建数据库表结构、索引和视图
 -- 数据集: 淘宝用户行为数据 (2017-11-25 至 2017-12-03)
--- 引擎: SQLite (开发环境) / Hive (生产等价)
+-- 引擎: DuckDB (开发环境) / Hive (生产等价)
 --
 -- 生产环境注意事项:
 --   1. 添加分区字段: PARTITIONED BY (dt STRING)
@@ -139,7 +139,10 @@ SELECT '数据库表结构、索引和视图创建完成' AS status;
 -- 数据导入（开发环境：从清洗后的 CSV 加载）
 -- 生产环境：通过 ETL pipeline（Spark / DataX）写入分区表
 -- --------------------------------------------------------
-.mode csv
-.import --skip 1 ../data/processed/user_behavior_cleaned.csv user_behavior
+INSERT INTO user_behavior
+SELECT * FROM read_csv_auto(
+    'data/processed/user_behavior_cleaned.csv',
+    header = true
+);
 
 SELECT '数据导入完成' AS status, COUNT(*) AS total_rows FROM user_behavior;

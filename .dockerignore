@@ -1,8 +1,39 @@
-.venv/
-data/raw/
-data/processed/
-.git/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Data & outputs (mounted as volumes)
+data/
+images/
+reports/
+*.duckdb
+*.db
+
+# Jupyter
 .ipynb_checkpoints/
-.workbuddy/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+
+# Tests (not needed in image)
+tests/

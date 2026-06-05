@@ -3,10 +3,10 @@
 -- 用途: 模拟A/B测试场景，为统计检验提供SQL数据基础
 -- 场景: 假设2017-12-01上线新功能
 -- 技术点: 条件聚合 + 窗口函数 + 统计量计算
--- 运行方式: sqlite3 user_behavior.db < 05_ab_test_framework.sql
+-- 运行方式: duckdb data/processed/analytics.duckdb < 05_ab_test_framework.sql
 -- ============================================================
 -- NOTE: 本脚本使用 user_id % 2 奇偶分组作为简化演示。
--- 生产级方案请参考 python/scripts/run_analysis_pipeline.py 中的
+-- 生产级方案请参考 scripts/pipeline.py 中的
 -- MD5 哈希随机化 + SRM 检查，二者在概念上等价（随机分组），
 -- 但哈希分组在工程上更稳健（避免 user_id 顺序偏差）。
 -- ============================================================

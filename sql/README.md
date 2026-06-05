@@ -2,7 +2,7 @@
 
 ## 模块概述
 
-本目录包含拼多多数据分析师求职项目的 **7个核心SQL分析脚本** 和 **1个数据库初始化脚本**，基于阿里云天池淘宝用户行为数据集（2017-11-25 至 2017-12-03，共9天），使用 **SQLite** 方言编写，兼容 MySQL 语法习惯。
+本目录包含拼多多数据分析师求职项目的 **7个核心SQL分析脚本** 和 **1个数据库初始化脚本**，基于阿里云天池淘宝用户行为数据集（2017-11-25 至 2017-12-03，共9天），使用 **DuckDB** 方言编写，兼容标准 SQL。
 
 ---
 
@@ -26,32 +26,26 @@
 ### 1. 创建数据库并导入数据
 
 ```bash
-# 进入SQL目录
-cd E:\NewWorkProject\PDD\pdd-data-analyst-project\sql\
+# 一键执行所有 SQL 脚本（自动创建 DuckDB 数据库并导入 CSV）
+python scripts/run_sql.py
 
-# 创建数据库（如尚未创建）
-sqlite3 user_behavior.db < 01_database_setup.sql
-
-# 导入CSV数据（假设数据文件为 user_behavior.csv）
-sqlite3 user_behavior.db <<EOF
-.mode csv
-.import ../data/user_behavior.csv user_behavior
-EOF
+# 或指定数据库路径
+python scripts/run_sql.py --db data/processed/analytics.duckdb
 ```
 
-> **注意**: 如果数据已通过其他方式导入，可直接运行 `01_database_setup.sql` 创建索引和视图。
+> **注意**: `run_sql.py` 会自动按顺序执行 `sql/` 下所有 `.sql` 文件，包括建表、导入数据、创建索引和视图。
 
 ### 2. 运行分析脚本
 
 ```bash
-# 运行单个脚本
-sqlite3 user_behavior.db < 02_user_retention.sql
+# 运行单个脚本（通过 DuckDB CLI 或 Python）
+duckdb data/processed/analytics.duckdb < sql/02_user_retention.sql
 
 # 将结果输出到文件
-sqlite3 user_behavior.db < 03_conversion_funnel.sql > ../reports/conversion_funnel.txt
+duckdb data/processed/analytics.duckdb < sql/03_conversion_funnel.sql > reports/conversion_funnel.txt
 
 # 以CSV格式输出（便于Python/Pandas读取）
-sqlite3 -header -csv user_behavior.db < 04_rfm_model.sql > ../reports/rfm_model.csv
+duckdb -csv data/processed/analytics.duckdb < sql/04_rfm_model.sql > reports/rfm_model.csv
 ```
 
 ---
@@ -155,7 +149,7 @@ sqlite3 -header -csv user_behavior.db < 04_rfm_model.sql > ../reports/rfm_model.
 **与Python衔接**:
 ```bash
 # 导出用户级明细给Python做统计检验
-sqlite3 -header -csv user_behavior.db < 05_ab_test_framework.sql > ../data/ab_test_users.csv
+duckdb -csv data/processed/analytics.duckdb < sql/05_ab_test_framework.sql > data/ab_test_users.csv
 ```
 
 ---
@@ -210,10 +204,10 @@ sqlite3 -header -csv user_behavior.db < 05_ab_test_framework.sql > ../data/ab_te
 
 ## 注意事项
 
-1. **SQLite方言限制**:
-   - 标准差使用 `SQRT(AVG(x²) - AVG(x)²)` 计算（总体标准差），样本标准差在脚本中通过 `n/(n-1)` 调整
-   - 日期计算使用 `JULIANDAY()` 函数，返回天数差
-   - `NTILE()` 要求 SQLite 3.25+（2018年后版本均支持）
+1. **DuckDB 方言特性**:
+   - 标准差使用 `STDDEV_SAMP()` 或 `STDDEV_POP()` 原生函数
+   - 日期计算使用 `DATE_DIFF('day', d1, d2)` 函数
+   - `NTILE()`、`ROW_NUMBER()`、`LAG()`、`LEAD()` 等窗口函数完全支持
 
 2. **数据导入检查**:
    ```sql
@@ -245,15 +239,16 @@ sqlite3 -header -csv user_behavior.db < 05_ab_test_framework.sql > ../data/ab_te
 
 ## 数据库兼容性对照表
 
-本模块使用 **SQLite** 方言编写。迁移至其他数据库时，主要函数映射如下：
+本模块使用 **DuckDB** 方言编写。迁移至其他数据库时，主要函数映射如下：
 
-| 功能 | SQLite | MySQL | Hive/Spark SQL |
+| 功能 | DuckDB | MySQL | Hive/Spark SQL |
 |------|--------|-------|----------------|
-| 日期差（天数） | `JULIANDAY(d2) - JULIANDAY(d1)` | `DATEDIFF(d2, d1)` | `datediff(d2, d1)` |
+| 日期差（天数） | `DATE_DIFF('day', d1, d2)` | `DATEDIFF(d2, d1)` | `datediff(d2, d1)` |
 | 分位数分箱 | `NTILE(5) OVER (...)` | `NTILE(5) OVER (...)` | `NTILE(5) OVER (...)` |
-| 标准差 | 手动公式 | `STD()` | `stddev_samp()` |
+| 标准差 | `STDDEV_SAMP()` / `STDDEV_POP()` | `STD()` | `stddev_samp()` |
 | 日期字符串 | `'YYYY-MM-DD'` | `'YYYY-MM-DD'` | `'YYYY-MM-DD'` |
 | 自连接 | 支持 | 支持 | 支持 |
 | 窗口函数 | `ROW_NUMBER`, `LAG`, `LEAD`, `RANK` | 同上 | 同上 |
+| CSV 导入 | `read_csv_auto()` | `LOAD DATA` | `spark.read.csv()` |
 
 > 生产环境建议通过 dbt 的 `target.type` 适配不同数据库方言，或使用 dbt-duckdb 作为零配置 OLAP 层。

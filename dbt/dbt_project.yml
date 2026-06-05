@@ -17,7 +17,7 @@ clean-targets:
   - "dbt_packages"
 
 vars:
-  data_path: '../data/processed/user_behavior_cleaned.csv'
+  data_path: '{{ env_var("DBT_DATA_PATH", "data/processed/user_behavior_cleaned.csv") }}'
   start_date: '2017-11-24'
   end_date: '2017-12-03'
 

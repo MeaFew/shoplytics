@@ -22,7 +22,7 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check python/ dashboard/ --ignore E501,F401,E402
+          ruff check scripts/ dashboard/ pyspark/ --ignore E501,F401,E402
 
   sql-lint:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
 
       - name: Lint SQL
         run: |
-          sqlfluff lint sql/ --dialect sqlite --ignore parsing
+          sqlfluff lint sql/ --dialect duckdb --ignore parsing
 
   docker-build:
     runs-on: ubuntu-latest
