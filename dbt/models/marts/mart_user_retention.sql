@@ -17,7 +17,7 @@ retention AS (
     SELECT
         fa.cohort_date,
         dm.date AS activity_date,
-        JULIANDAY(dm.date) - JULIANDAY(fa.cohort_date) AS day_diff,
+        DATE_DIFF('day', fa.cohort_date, dm.date) AS day_diff,
         COUNT(DISTINCT dm.user_id) AS retained_users
     FROM first_active fa
     JOIN {{ ref('int_user_daily_metrics') }} dm

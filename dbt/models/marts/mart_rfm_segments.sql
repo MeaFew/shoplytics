@@ -9,7 +9,7 @@ WITH rfm_base AS (
     SELECT
         user_id,
         -- Recency: 距数据集最后一天的天数（天数越小越活跃）
-        JULIANDAY('2017-12-03') - JULIANDAY(last_active_date) AS recency_days,
+        DATE_DIFF('day', last_active_date, DATE '2017-12-03') AS recency_days,
         -- Frequency: 活跃天数
         active_days AS frequency,
         -- Monetary proxy: 购买次数
