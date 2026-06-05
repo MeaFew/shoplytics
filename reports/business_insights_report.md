@@ -3,7 +3,7 @@
 > **项目**: 拼多多数据分析师求职项目  
 > **数据集**: 阿里云天池 — 淘宝用户行为数据集（2017-11-24 至 2017-12-03）  
 > **数据规模**: 287,004 用户，2,584,151 商品，29,116,710 条行为记录  
-> **分析工具**: SQL（SQLite）+ Python（Pandas / Scikit-learn / XGBoost）+ PySpark  
+> **分析工具**: SQL（DuckDB）+ Python（Pandas / Scikit-learn / XGBoost）+ PySpark  
 > **报告日期**: 2026-06-05  
 
 ---
@@ -215,7 +215,7 @@
 | 中风险 | 沉睡用户 (R≤2, F≥3) | 12.3% | 最近 3 天无行为但历史高频 | 个性化推荐 + 专属折扣，高成本但高回报 |
 | 低风险 | 新用户未转化 (R≥3, F≤2, 无购买) | 约 18% | 近期活跃但无购买记录 | 首单优惠、限时免邮 |
 
-**预警机制**: 建议每日运行 `04_rfm_model.sql` 与 `03_daily_report_generator.py`，自动标记风险用户并推送至 CRM 系统。
+**预警机制**: 建议每日运行 `04_rfm_model.sql` 与 `scripts/pipeline.py`，自动标记风险用户并推送至 CRM 系统。
 
 ---
 
@@ -385,7 +385,7 @@
 ### 7.3 长期战略规划（3–6 个月）
 
 1. **实时数据基建**
-   - 将当前 SQLite 离线分析迁移至实时数仓（如 ClickHouse / Flink），支持分钟级漏斗监控与异常预警。
+   - 将当前 DuckDB 离线分析迁移至实时数仓（如 ClickHouse / Flink），支持分钟级漏斗监控与异常预警。
    - 将 `06_anomaly_detection.sql` 的 3σ 规则升级为基于时间序列模型（如 Prophet / LSTM）的智能预测。
 
 2. **用户生命周期价值（LTV）模型**
@@ -547,4 +547,4 @@ jupyter notebook notebooks/02_user_churn_prediction.ipynb
 
 *报告撰写: 电商数据分析师*  
 *数据来源: 阿里云天池 — 淘宝用户行为数据集*  
-*分析代码: `sql/` 目录（7 个核心脚本）+ `python/` 目录（5 个 Notebook + 3 个脚本）*
+*分析代码: `sql/` 目录（7 个核心脚本）+ `scripts/` 和 `notebooks/` 目录*

@@ -30,9 +30,10 @@ DUCKDB_PATH = PROCESSED_DATA_DIR / "analytics.duckdb"
 SPARK_INPUT_PATH = PROCESSED_DATA_DIR / "spark_cleaned"
 SPARK_OUTPUT_DIR = PROCESSED_DATA_DIR
 
-# 确保目录存在
-for d in [RAW_DATA_DIR, PROCESSED_DATA_DIR, REPORTS_DIR, IMAGES_DIR]:
-    d.mkdir(parents=True, exist_ok=True)
+def ensure_dirs() -> None:
+    """创建项目所需的所有目录（不自动执行，需显式调用）。"""
+    for d in [RAW_DATA_DIR, PROCESSED_DATA_DIR, REPORTS_DIR, IMAGES_DIR]:
+        d.mkdir(parents=True, exist_ok=True)
 
 # 分析参数
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))

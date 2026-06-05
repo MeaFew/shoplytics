@@ -28,6 +28,7 @@ from config import (
     PROCESSED_DATA_DIR,
     RAW_CSV_PATH,
     START_DATE,
+    ensure_dirs,
 )
 
 # ---------------------------------------------------------------------------
@@ -211,6 +212,8 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=RAW_CSV_PATH, help="原始数据路径")
     parser.add_argument("--output-dir", type=Path, default=PROCESSED_DATA_DIR, help="输出目录")
     args = parser.parse_args()
+
+    ensure_dirs()
 
     input_path = args.input
     output_dir = args.output_dir

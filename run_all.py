@@ -30,13 +30,15 @@ def main():
     # This runner focuses on the core Python pipeline.
     steps = [
         ("Preprocessing", "python scripts/preprocess.py --input data/raw/UserBehavior.csv --output data/processed/"),
+        ("SQL Analysis", "python scripts/run_sql.py"),
+        ("dbt Models", "cd dbt && dbt run && dbt test"),
         ("Analysis Pipeline", "python scripts/pipeline.py"),
     ]
 
-    print("E-commerce User Behavior Analytics — Core Pipeline")
+    print("E-commerce User Behavior Analytics — Full Pipeline")
     print("=" * 60)
-    print("Note: SQL analysis and dbt models require DuckDB/dbt setup.")
-    print("      Run 'make sql' and 'make dbt' separately if configured.")
+    print("Note: SQL/dbt steps require DuckDB and dbt installed. Install with:")
+    print("      pip install duckdb dbt-duckdb")
     print("=" * 60)
 
     for name, cmd in steps:

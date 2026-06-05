@@ -18,8 +18,8 @@
 | 03 | `03_ab_test_analysis.ipynb` | Notebook | A/B 测试统计分析 | 样本量计算 + 卡方检验 + Z 检验 + 效应量 |
 | 04 | `04_recommendation_system.ipynb` | Notebook | 协同过滤推荐系统 | 用户-物品矩阵 + 余弦相似度 + 留一法评估 |
 | 05 | `01_data_preprocessing.py` | Script | 数据清洗与特征工程 | 去重/缺失/异常值处理 + 时间特征衍生 |
-| 06 | `02_data_analysis.py` | Script | 核心分析函数库 | 留存/漏斗/RFM/异常检测的 Python 实现 |
-| 07 | `03_daily_report_generator.py` | Script | 自动化日报生成 | KPI 计算 + Matplotlib 图表 + HTML 组装 |
+| 06 | `scripts/pipeline.py` (integrated) | Script | 核心分析函数库 | 留存/漏斗/RFM/异常检测的 Python 实现 |
+| 07 | `scripts/pipeline.py` (integrated) | Script | 自动化日报生成 | KPI 计算 + Matplotlib 图表 + HTML 组装 |
 
 ---
 
@@ -168,7 +168,7 @@
 
 ### 5.1 功能说明
 
-`03_daily_report_generator.py` 实现了从数据加载 → KPI 计算 → 图表生成 → HTML 组装的全自动日报流水线：
+`scripts/pipeline.py` (integrated) 实现了从数据加载 → KPI 计算 → 图表生成 → HTML 组装的全自动日报流水线：
 
 1. **数据加载**: 自动检测 `user_behavior_cleaned.csv`，若不存在则生成模拟数据保证可运行。
 2. **KPI 计算**: 计算 DAU、PV、购买量、转化率、次日留存率 5 大核心指标及环比变化。
@@ -210,7 +210,7 @@ PV: 1,420,000 (环比 +3.5%)
 
 1. **可复现性**: 所有 Notebook 均内置模拟数据生成逻辑，确保在无原始数据集的环境下仍可完整运行。
 2. **中文字体适配**: 统一设置 `plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei']`，解决 Matplotlib 中文乱码问题。
-3. **模块化设计**: `02_data_analysis.py` 将留存、漏斗、RFM、异常检测封装为独立函数，供 Notebook 与脚本复用。
+3. **模块化设计**: `scripts/pipeline.py` (integrated) 将留存、漏斗、RFM、异常检测封装为独立函数，供 Notebook 与脚本复用。
 4. **SQL-Python 无缝衔接**: A/B 测试用户级明细由 SQL 导出 CSV，Python 直接读取做统计检验；RFM 分层结果可输入流失模型作为特征。
 
 ---
