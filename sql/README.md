@@ -240,3 +240,20 @@ sqlite3 -header -csv user_behavior.db < 05_ab_test_framework.sql > ../data/ab_te
 *作者: SQL数据分析师模块*  
 *数据集: 阿里云天池 - 淘宝用户行为数据集*  
 *时间范围: 2017-11-25 至 2017-12-03*
+
+---
+
+## 数据库兼容性对照表
+
+本模块使用 **SQLite** 方言编写。迁移至其他数据库时，主要函数映射如下：
+
+| 功能 | SQLite | MySQL | Hive/Spark SQL |
+|------|--------|-------|----------------|
+| 日期差（天数） | `JULIANDAY(d2) - JULIANDAY(d1)` | `DATEDIFF(d2, d1)` | `datediff(d2, d1)` |
+| 分位数分箱 | `NTILE(5) OVER (...)` | `NTILE(5) OVER (...)` | `NTILE(5) OVER (...)` |
+| 标准差 | 手动公式 | `STD()` | `stddev_samp()` |
+| 日期字符串 | `'YYYY-MM-DD'` | `'YYYY-MM-DD'` | `'YYYY-MM-DD'` |
+| 自连接 | 支持 | 支持 | 支持 |
+| 窗口函数 | `ROW_NUMBER`, `LAG`, `LEAD`, `RANK` | 同上 | 同上 |
+
+> 生产环境建议通过 dbt 的 `target.type` 适配不同数据库方言，或使用 dbt-duckdb 作为零配置 OLAP 层。
