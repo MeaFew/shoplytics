@@ -126,7 +126,7 @@ ecommerce-user-analytics/
 | 10-day window | Cannot observe monthly seasonality; D7+ retention is right-censored | ≥90 days of data for Prophet/ARIMA forecasting |
 | No monetary field | GMV, ARPU, CLV unavailable; RFM degrades to RF | Join with order/transaction table for full RFM |
 | No user attributes | Missing demographics, device, channel segmentation | Join with user profile table for cohort analysis |
-| Simulated A/B test | User-ID parity split as random assignment proxy | Hash-based randomization + SRM check + CUPED variance reduction |
+| Simulated A/B test | User-ID hash-based randomization as proxy when true experiment metadata unavailable | Hash-based randomization + SRM check + CUPED variance reduction |
 | Single-node execution | SQLite + local CSV, no distributed query engine | Hive/Spark on partitioned Parquet + Airflow scheduling |
 
 > The A/B test framework implements the complete statistical pipeline (sample size calculation → homogeneity check → two-proportion Z-test → Cohen's h → 95% CI) — the parity-based grouping is a **valid** randomization strategy when true experiment metadata is unavailable, and the statistical methodology transfers directly to production experiment platforms.
