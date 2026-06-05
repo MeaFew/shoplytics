@@ -34,7 +34,7 @@ test:
 	pytest tests/ -v
 
 verify:
-	ruff check scripts/ dashboard/ pyspark/ --ignore E501,F401,E402
+	ruff check scripts/ dashboard/ pyspark/ tests/ --ignore E501,F401,E402
 	sqlfluff lint sql/
 	pytest tests/ -v
 	python scripts/validate_data.py

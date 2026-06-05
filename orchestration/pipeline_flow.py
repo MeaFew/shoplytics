@@ -10,6 +10,10 @@ Install: pip install prefect
 from datetime import datetime
 from pathlib import Path
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import RAW_CSV_PATH, PROCESSED_DATA_DIR, DUCKDB_PATH
+
 # --- Prefect imports (install: pip install prefect) ---
 try:
     from prefect import flow, task
@@ -28,14 +32,16 @@ except ImportError:
 
 
 @task(name="preprocess-data", retries=1, tags=["etl"])
-def preprocess_data(input_path: str = "data/raw/UserBehavior.csv",
-                    output_dir: str = "data/processed/"):
+def preprocess_data(input_path: str | None = None,
+                    output_dir: str | None = None):
     """Step 1: Clean and preprocess raw user behavior data."""
+    inp = input_path or str(RAW_CSV_PATH)
+    out = output_dir or str(PROCESSED_DATA_DIR)
     import subprocess
     result = subprocess.run([
         "python", "scripts/preprocess.py",
-        "--input", input_path,
-        "--output", output_dir,
+        "--input", inp,
+        "--output", out,
     ], capture_output=True, text=True)
     print(result.stdout[-500:])
     if result.returncode != 0:
@@ -44,10 +50,11 @@ def preprocess_data(input_path: str = "data/raw/UserBehavior.csv",
 
 
 @task(name="run-sql-analysis", retries=1, tags=["sql"])
-def run_sql_analysis(db_path: str = "data/processed/analytics.duckdb"):
+def run_sql_analysis(db_path: str | None = None):
     """Step 2: Execute SQL analysis scripts on the preprocessed data."""
+    db = db_path or str(DUCKDB_PATH)
     import duckdb
-    con = duckdb.connect(db_path)
+    con = duckdb.connect(db)
     sql_dir = Path("sql")
     scripts = sorted(sql_dir.glob("0*.sql"))
     for script in scripts:

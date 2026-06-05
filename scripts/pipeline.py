@@ -37,6 +37,7 @@ from config import (
     IMAGES_DIR,
     RANDOM_SEED,
     PROJECT_ROOT,
+    ensure_dirs,
 )
 
 # 只忽略特定警告，而不是全部
@@ -64,6 +65,7 @@ def section(title: str) -> None:
 
 def main() -> None:
     """Run the full analytics pipeline."""
+    ensure_dirs()
 
     # ========================================================================
     # 1. 加载数据

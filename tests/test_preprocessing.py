@@ -13,7 +13,14 @@ if str(project_root) not in sys.path:
 
 import pandas as pd
 import numpy as np
+import pytest
 from config import CLEANED_CSV_PATH
+
+
+@pytest.fixture(scope="module")
+def cleaned_df():
+    """Module-scoped fixture: reads the cleaned CSV once for all tests."""
+    return pd.read_csv(CLEANED_CSV_PATH)
 
 
 def test_cleaned_data_exists():
@@ -21,29 +28,26 @@ def test_cleaned_data_exists():
     assert CLEANED_CSV_PATH.exists(), f"Cleaned data not found at {CLEANED_CSV_PATH}"
 
 
-def test_cleaned_data_columns():
+def test_cleaned_data_columns(cleaned_df):
     """清洗后的数据必须包含预期的列。"""
-    df = pd.read_csv(CLEANED_CSV_PATH, nrows=5)
     expected_cols = {'user_id', 'item_id', 'category_id', 'behavior_type', 'timestamp', 'date'}
-    assert expected_cols.issubset(set(df.columns)), f"Missing columns: {expected_cols - set(df.columns)}"
+    assert expected_cols.issubset(set(cleaned_df.columns)), \
+        f"Missing columns: {expected_cols - set(cleaned_df.columns)}"
 
 
-def test_behavior_types_valid():
+def test_behavior_types_valid(cleaned_df):
     """behavior_type 必须是限定值之一。"""
-    df = pd.read_csv(CLEANED_CSV_PATH, usecols=['behavior_type'])
     valid_behaviors = {'pv', 'buy', 'cart', 'fav'}
-    assert set(df['behavior_type'].unique()).issubset(valid_behaviors), \
-        f"Invalid behavior types: {set(df['behavior_type'].unique()) - valid_behaviors}"
+    assert set(cleaned_df['behavior_type'].unique()).issubset(valid_behaviors), \
+        f"Invalid behavior types: {set(cleaned_df['behavior_type'].unique()) - valid_behaviors}"
 
 
-def test_timestamps_positive():
+def test_timestamps_positive(cleaned_df):
     """timestamp 必须为正数。"""
-    df = pd.read_csv(CLEANED_CSV_PATH, usecols=['timestamp'])
-    assert (df['timestamp'] > 0).all(), "Found non-positive timestamps"
+    assert (cleaned_df['timestamp'] > 0).all(), "Found non-positive timestamps"
 
 
-def test_ids_positive():
+def test_ids_positive(cleaned_df):
     """user_id, item_id, category_id 必须为正数。"""
-    df = pd.read_csv(CLEANED_CSV_PATH, usecols=['user_id', 'item_id', 'category_id'])
     for col in ['user_id', 'item_id', 'category_id']:
-        assert (df[col] > 0).all(), f"Found non-positive {col}"
+        assert (cleaned_df[col] > 0).all(), f"Found non-positive {col}"
