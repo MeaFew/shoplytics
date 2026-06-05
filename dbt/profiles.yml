@@ -3,7 +3,7 @@ pdd_ecommerce_analytics:
   outputs:
     dev:
       type: duckdb
-      path: 'E:\NewWorkProject\PDD\pdd-data-analyst-project\dbt\pdd_analytics.duckdb'
+      path: './pdd_analytics.duckdb'
       threads: 4
       extensions:
         - parquet
