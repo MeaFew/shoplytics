@@ -18,6 +18,16 @@ PySpark ETL 数据清洗与特征工程脚本
 """
 
 import os
+import sys
+from pathlib import Path
+
+# 将项目根目录加入 Python 路径，确保能导入 config.py
+project_root = Path(__file__).parents[1].resolve()
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from config import RAW_CSV_PATH, PROCESSED_DATA_DIR
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, to_timestamp, from_unixtime,
@@ -31,11 +41,9 @@ from pyspark.sql.types import (
 # ---------------------------------------------------------------------------
 # 0. 路径配置
 # ---------------------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RAW_CSV_PATH = os.path.join(BASE_DIR, "data", "raw", "UserBehavior.csv")
-# 若不存在完整数据集，则回退到样本数据（便于本地调试）
-SAMPLE_CSV_PATH = os.path.join(BASE_DIR, "data", "raw", "UserBehavior_sample.csv")
-OUTPUT_PATH = os.path.join(BASE_DIR, "data", "processed", "spark_cleaned")
+RAW_CSV = str(RAW_CSV_PATH)
+SAMPLE_CSV_PATH = str(Path(RAW_CSV).parent / "UserBehavior_sample.csv")
+OUTPUT_PATH = str(PROCESSED_DATA_DIR / "spark_cleaned")
 
 # ---------------------------------------------------------------------------
 # 1. 初始化 SparkSession
@@ -69,7 +77,7 @@ schema = StructType([
 # ---------------------------------------------------------------------------
 # 3. 读取 CSV 数据
 # ---------------------------------------------------------------------------
-input_path = RAW_CSV_PATH if os.path.exists(RAW_CSV_PATH) else SAMPLE_CSV_PATH
+input_path = RAW_CSV if os.path.exists(RAW_CSV) else SAMPLE_CSV_PATH
 print(f"[INFO] 读取数据源: {input_path}")
 
 df_raw = (
