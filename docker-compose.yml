@@ -1,8 +1,24 @@
 version: "3.8"
 
 services:
-  app:
+  # === Core analytics service ===
+  analytics:
     build: .
+    image: ecommerce-analytics:latest
+    container_name: analytics-pipeline
+    volumes:
+      - ./data:/app/data
+      - ./images:/app/images
+      - ./reports:/app/reports
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python orchestration/pipeline_flow.py
+
+  # === Interactive dashboard ===
+  dashboard:
+    build: .
+    image: ecommerce-analytics:latest
+    container_name: analytics-dashboard
     ports:
       - "8501:8501"
     volumes:
@@ -12,15 +28,28 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     command: >
-      sh -c "python python/scripts/run_analysis_pipeline.py &&
-             cd dashboard && streamlit run app.py --server.address 0.0.0.0 --server.port 8501"
+      streamlit run dashboard/app.py
+      --server.address 0.0.0.0
+      --server.port 8501
+      --server.headless true
+    depends_on:
+      - analytics
 
+  # === Jupyter Lab (exploratory analysis) ===
   jupyter:
-    image: jupyter/scipy-notebook:latest
+    build: .
+    image: ecommerce-analytics:latest
+    container_name: analytics-jupyter
     ports:
       - "8888:8888"
     volumes:
-      - .:/home/jovyan/work
-    environment:
-      - JUPYTER_ENABLE_LAB=yes
-    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+      - ./data:/app/data
+      - ./images:/app/images
+    command: >
+      jupyter lab
+      --ip 0.0.0.0
+      --port 8888
+      --no-browser
+      --allow-root
+      --NotebookApp.token=''
+      --NotebookApp.password=''
