@@ -78,7 +78,7 @@ pip install dbt-duckdb
 
 本项目已提供 `profiles.yml`，使用 DuckDB 作为本地分析引擎：
 
-- **数据库文件**：`pdd_analytics.duckdb`（本地文件，无需服务器）
+- **数据库文件**：`analytics.duckdb`（本地文件，无需服务器）
 - **线程数**：4
 - **内存限制**：4GB
 
@@ -195,7 +195,7 @@ dbt compile --select int_user_daily_metrics
 1. **数据路径**：`dbt_project.yml` 中的 `vars.data_path` 已配置为绝对路径，如移动项目请相应修改。
 2. **DuckDB 并发**：DuckDB 为嵌入式数据库，不支持多进程并发写入，dbt 线程数已设为4用于读取并行。
 3. **日期硬编码**：留存分析中数据截止日期 `2017-12-03` 为硬编码，如更换数据集请修改 `mart_user_segments.sql`。
-4. **首次运行**：首次 `dbt run` 会创建 `pdd_analytics.duckdb` 数据库文件，后续运行将复用该文件。
+4. **首次运行**：首次 `dbt run` 会创建 `analytics.duckdb` 数据库文件，后续运行将复用该文件。
 
 ---
 

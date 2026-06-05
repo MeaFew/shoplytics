@@ -51,5 +51,4 @@ services:
       --port 8888
       --no-browser
       --allow-root
-      --NotebookApp.token=''
-      --NotebookApp.password=''
+      --NotebookApp.token='change-me-in-production'

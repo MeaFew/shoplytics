@@ -14,7 +14,7 @@
 ## 安装依赖
 
 ```bash
-cd E:\NewWorkProject\PDD\pdd-data-analyst-project\dashboard
+cd ecommerce-user-analytics/dashboard
 pip install -r requirements.txt
 ```
 

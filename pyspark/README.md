@@ -73,7 +73,7 @@ $env:PATH += ";$env:SPARK_HOME\bin"
 建议按编号顺序执行，因为下游脚本依赖上游生成的数据：
 
 ```bash
-cd E:\NewWorkProject\PDD\pdd-data-analyst-project
+cd ecommerce-user-analytics
 
 # 步骤 1：ETL 清洗
 python pyspark/01_spark_etl.py
