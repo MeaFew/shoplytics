@@ -42,53 +42,6 @@
 
 ---
 
-## 如何验证本项目（面试官 / 你自己）
-
-> 以下三层验证，从「看一眼」到「完整跑一遍」，由浅入深。
-
-### Level 1 — 1 分钟：看徽章与提交记录
-
-1. **CI 状态**：README 顶部的 ![CI](https://github.com/MeaFew/ecommerce-user-analytics/workflows/CI/badge.svg) 徽章是**实时**的。点击可查看每一次 lint / sql-lint / docker-build 的完整日志。
-2. **Commit 记录**：`git log --graph --oneline` 或直接在 GitHub 查看。17 个 commit 按模块递进（预处理 → SQL → 模型 → 看板 → CI → 测试），不是「一天写完再回填日期」的虚假时间线。
-3. **代码量**：`cloc .` 可看到约 3,000+ 行有效代码（不含 Notebook 输出和测试数据），不是 README + 空文件撑起来的骨架。
-
-### Level 2 — 3 分钟：Docker 一键启动看板
-
-```bash
-git clone https://github.com/MeaFew/ecommerce-user-analytics.git
-cd ecommerce-user-analytics
-
-# 启动 Streamlit 看板（需 Python 依赖）
-make setup && make dashboard
-
-# 或启动 Apache Superset BI 看板（需 Docker）
-docker compose -f docker-compose.superset.yml up -d
-# 访问 http://localhost:8088
-```
-
-如果能看到带真实数据（DAU 20 万+、转化率 2.24%）的交互界面，说明数据管线是通的。
-
-### Level 3 — 10 分钟：完整跑通 pipeline
-
-```bash
-# 从 raw CSV 到最终报告，一键执行
-make all
-
-# 或分步验证
-python scripts/preprocess.py --input data/raw/UserBehavior.csv --output data/processed/
-python scripts/run_sql.py
-python scripts/pipeline.py
-```
-
-预期输出：
-- 预处理：~0.4 秒完成 2,900 万行清洗
-- SQL 分析：7 个脚本依次执行，生成 DuckDB 视图
-- Pipeline：输出 `reports/` 目录下的 EDA、流失模型、A/B 测试、Cohort 分析等结果文件
-
-**如果你遇到任何问题**，`make verify` 会运行与 CI 完全一致的检查，告诉你代码、SQL 或 Docker 哪里不符合规范。
-
----
-
 ## 快速开始
 
 ```bash
