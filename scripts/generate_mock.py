@@ -4,20 +4,30 @@
 格式与真实数据集完全一致，可直接用于项目开发和测试。
 
 真实数据集统计特征参考：
-- 时间范围: 2017-11-25 ~ 2017-12-03 (9天)
+- 时间范围: 2017-11-24 ~ 2017-12-03 (10天)
 - 行为分布: pv ~90%, cart ~5%, fav ~3%, buy ~2%
 - 用户活跃高峰: 晚上 20:00-23:00
 - 周末流量略高于工作日
 
 使用方法:
-    python generate_mock_data.py --output data/raw/UserBehavior.csv --n_records 100000
+    python scripts/generate_mock.py --output data/raw/UserBehavior.csv --n_records 100000
 """
 
 import argparse
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 import os
+
+# 添加项目根目录到 sys.path，以便导入 config 模块
+_project_root = Path(__file__).resolve().parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
+from config import RAW_CSV_PATH, RAW_DATA_DIR, START_DATE, END_DATE
 
 
 def generate_mock_data(n_records=100000, random_seed=42):
@@ -38,8 +48,9 @@ def generate_mock_data(n_records=100000, random_seed=42):
     """
     np.random.seed(random_seed)
     
-    # 时间范围起点: 2017-11-25
-    start_time = datetime(2017, 11, 25)
+    # 时间范围起点（与 config.py 保持一致）
+    start_time = datetime.strptime(START_DATE, "%Y-%m-%d")
+    num_days = (datetime.strptime(END_DATE, "%Y-%m-%d") - start_time).days + 1
     # 用户和商品ID池
     n_users = max(1000, n_records // 100)
     n_items = max(5000, n_records // 20)
@@ -72,11 +83,9 @@ def generate_mock_data(n_records=100000, random_seed=42):
             # 凌晨时段，降低概率（重新采样）
             second_of_day = np.random.randint(7 * 3600, 86400)
         
-        # 随机选择9天中的一天
-        day_offset = np.random.randint(0, 9)
+        # 随机选择天数
+        day_offset = np.random.randint(0, num_days)
         
-        # 周末（第2、3、9、10天对应11-25周六、11-26周日、12-02周六、12-03周日）
-        # 简化处理：随机偏移
         ts = int((start_time + timedelta(days=day_offset, seconds=second_of_day)).timestamp())
         timestamps.append(ts)
     
@@ -97,7 +106,7 @@ def generate_mock_data(n_records=100000, random_seed=42):
 
 def main():
     parser = argparse.ArgumentParser(description='生成模拟电商用户行为数据')
-    parser.add_argument('--output', type=str, default='data/raw/UserBehavior.csv',
+    parser.add_argument('--output', type=str, default=str(RAW_CSV_PATH),
                         help='输出文件路径')
     parser.add_argument('--n_records', type=int, default=100000,
                         help='生成的记录数量（默认10万条）')

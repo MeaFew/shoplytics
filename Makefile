@@ -43,5 +43,5 @@ verify:
 all: preprocess sql dbt pipeline
 
 clean:
-	rm -rf data/processed/*.duckdb
+	rm -f data/processed/*.duckdb
 	find . -type d -name "__pycache__" -exec rm -rf {} +
