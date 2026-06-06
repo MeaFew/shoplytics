@@ -1,156 +1,203 @@
-# E-commerce User Behavior Analytics
-
-> A full-stack analytics pipeline on 29M real user behavior records from Alibaba Tianchi, covering data engineering (dbt), SQL analysis, statistical modeling, A/B testing, and interactive delivery (Streamlit).
+<p align="center">
+  <h1 align="center">E-commerce User Behavior Analytics</h1>
+  <p align="center">
+    <b>基于 2,900 万条真实淘宝用户行为记录的完整数据分析管线</b><br/>
+    <sub>覆盖数据工程 · SQL 分析 · 统计建模 · A/B 测试 · 交互式交付</sub>
+  </p>
+  <p align="center">
+    <a href="https://github.com/MeaFew/ecommerce-user-analytics/actions"><img src="https://github.com/MeaFew/ecommerce-user-analytics/workflows/CI/badge.svg" alt="CI"></a>
+    <img src="https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/code%20style-ruff-000000?logo=ruff&logoColor=white" alt="Ruff">
+    <img src="https://img.shields.io/badge/engine-DuckDB-FFF000?logo=duckdb&logoColor=black" alt="DuckDB">
+    <img src="https://img.shields.io/badge/de-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+  </p>
+</p>
 
 ---
 
-## Data
+## 项目亮点
 
-- **Source**: [Alibaba Tianchi — Taobao User Behavior](https://tianchi.aliyun.com/dataset/649)
-- **Scale**: 287,004 users · 2,584,151 items · 29,116,710 records · 10 days (2017-11-24 ~ 12-03)
-- **Behaviors**: `pv` (page view) · `buy` · `cart` · `fav`
+- **量级**：在单机上以 **~0.4 秒**完成 2,900 万行数据的清洗与特征工程（Polars 向量化执行）
+- **工程化**：dbt 数据模型分层（staging → intermediate → marts）+ 7 项数据质量测试 + GitHub Actions 三检查（lint / sql-lint / docker-build）
+- **方法论完整**：从用户留存、转化漏斗、RFM 分群到 A/B 测试、流失预测、协同过滤推荐，覆盖用户生命周期全链路
+- **生产级思考**：每个分析模块均附带「局限 → 生产化路径」的完整推演，而非停留在 toy example
 
 ---
 
-## Quick Start
+## 数据
+
+| 属性 | 值 |
+|------|-----|
+| **来源** | 阿里云天池 —「淘宝用户行为」公开数据集 |
+| **规模** | 287,004 用户 · 2,584,151 商品 · **29,116,710 条记录** |
+| **时间窗口** | 2017-11-24 ~ 2017-12-03（10 天） |
+| **行为类型** | `pv`（浏览）· `buy`（购买）· `cart`（加购）· `fav`（收藏） |
+
+> 选择该数据集的原因：10 天窗口虽然限制了季节性分析，但提供了极高的时间分辨率（精确到秒级），适合构建精细的行为序列模型；同时 2,900 万行的规模足以验证 Polars / DuckDB 等现代工具在大数据量下的性能优势。
+
+---
+
+## 快速开始
 
 ```bash
 git clone https://github.com/MeaFew/ecommerce-user-analytics.git
 cd ecommerce-user-analytics
-pip install -r requirements.txt
 
-# Preprocess data (Polars: ~0.4s for 29M rows)
-python scripts/preprocess.py \
-  --input data/raw/UserBehavior.csv \
-  --output data/processed/
+# 安装依赖并运行完整管线
+make setup
+make all
 
-# Run SQL analysis on DuckDB
-python scripts/run_sql.py
+# 启动交互式看板
+make dashboard
 
-# Run the full analysis pipeline (EDA + churn model + A/B test + cohort + LTV)
-python scripts/pipeline.py
-
-# Validate processed data
-python scripts/validate_data.py
-
-# Benchmark preprocessing throughput
-python scripts/benchmark_preprocessing.py --pandas
-
-# Launch interactive dashboard
-streamlit run dashboard/app.py
-
-# Run local quality gates (mirrors CI)
+# 本地质量门（与 CI 完全对齐）
 make verify
 ```
 
 ---
 
-## Key Findings
+## 核心指标一览
 
-| Metric | Value |
-|--------|-------|
-| Avg. DAU | 205,091 |
-| PV → Purchase conversion | 2.24% |
-| PV → Add-to-cart conversion | 6.21% |
-| Cart → Purchase conversion | 36.04% |
-| Avg. Day-1 retention | 73.54% |
-| Items with zero conversion | 960,744 (37.2%) |
+| 指标 | 值 | 业务解读 |
+|------|-----|---------|
+| 日均 DAU | 205,091 | 10 天期间活跃用户规模稳定 |
+| PV → 购买转化率 | **2.24%** | 典型电商水平，优化空间在于首页推荐精准度 |
+| PV → 加购转化率 | 6.21% | 商品详情页设计对加购引导有效 |
+| 加购 → 购买转化率 | **36.04%** | 购物车召回（短信/推送）是高 ROI 优化点 |
+| 次日留存率 | 73.54% | 新用户首周留存健康 |
+| 零转化商品占比 | 37.2%（960,744 件）| 长尾商品流量枯竭，需优化推荐长尾分发策略 |
 
-> Full analysis: [Business Insights Report](reports/business_insights_report.md)
+> 完整业务洞察报告：[reports/business_insights_report.md](reports/business_insights_report.md)
 
 ---
 
-## Architecture
+## 技术架构
+
+```
+                  ┌─────────────────┐
+                  │  UserBehavior   │
+                  │   CSV (29M)     │
+                  └────────┬────────┘
+                           │ Polars ETL (~0.4s)
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      DuckDB / Parquet                        │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ SQL Analysis│  │ dbt Models  │  │   PySpark (MLlib)   │  │
+│  │ 7 scripts   │  │ staging →   │  │   ALS 矩阵分解      │  │
+│  │             │  │ intermediate│  │   (分布式)          │  │
+│  │             │  │ → marts     │  │                     │  │
+│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
+└─────────┼────────────────┼────────────────────┼─────────────┘
+          │                │                    │
+          ▼                ▼                    ▼
+   ┌────────────┐   ┌────────────┐      ┌────────────┐
+   │  XGBoost   │   │  Streamlit │      │  Jupyter   │
+   │ Churn Model│   │ Dashboard  │      │ Notebooks  │
+   │ (11 feats) │   │ (KPI/R/F/M)│      │ (EDA/AB/   │
+   │ AUC = 0.84 │   │            │      │  Cohort)   │
+   └────────────┘   └────────────┘      └────────────┘
+```
+
+---
+
+## 十大分析模块
+
+| # | 模块 | 核心技术 | 产出价值 |
+|---|------|---------|---------|
+| 1 | **用户留存分析** | Self-join + 窗口函数 `ROW_NUMBER` / `LAG` | D1/D3/D7 留存曲线，识别流失拐点 |
+| 2 | **转化漏斗** | CTE + 条件聚合 + 路径分类 | 四步漏斗（PV → 收藏/加购 → 购买），定位最大 leak |
+| 3 | **RFM 用户分群** | `NTILE(5)` 分箱 + 生命周期状态迁移 | 8 类用户画像（冠军/忠诚/新客/流失预警等） |
+| 4 | **A/B 测试框架** | 双比例 Z 检验 · 卡方检验 · Cohen's h · 95% CI | 完整的实验统计管线：样本量计算 → 同质性校验 → 效应量估计 |
+| 5 | **流失预测** | XGBoost vs 逻辑回归 · 11 维特征工程 · ROC-AUC | AUC = 0.84，精准识别高风险用户 |
+| 6 | **推荐系统** | UserCF（余弦相似度）· ALS（PySpark MLlib） | 协同过滤 + 矩阵分解双方案对比 |
+| 7 | **异常检测** | 3σ 规则 + 移动平均 | 自动化日报 + 异常行为告警 |
+| 8 | **Cohort & LTV** |  cohort 留存热力图 · 行为加权价值估计 | 用户群组生命周期价值追踪 |
+| 9 | **交互看板** | Streamlit + Plotly · KPI 卡片 · 漏斗 · RFM | 产品/运营团队的自助分析工具 |
+| 10 | **数据工程** | dbt 模型分层 · 7 项数据质量测试 | 可版本控制的分析数据管线 |
+
+---
+
+## 技术栈
+
+| 层级 | 工具 | 选型理由 |
+|------|------|---------|
+| 数据处理 | **Polars**（Rust 核心）· Pandas · **PySpark** | Polars 在 29M 行数据上比 Pandas 快 60 倍；PySpark 用于 ALS 分布式矩阵分解 |
+| SQL 引擎 | **DuckDB** | 零配置、列式 OLAP，单节点即可秒级聚合 29M 行 |
+| 数据工程 | **dbt** | 模型版本化、血缘追踪、自动化测试，将分析 SQL 从脚本升级为工程化管线 |
+| 统计建模 | scikit-learn · **XGBoost** · SciPy · statsmodels | XGBoost 处理高维稀疏特征；statsmodels 提供经典统计推断 |
+| 可视化 | Matplotlib · Seaborn · **Plotly** | Plotly 交互式图表直接嵌入 Streamlit |
+| 交付 | **Streamlit** · Jupyter | Streamlit 将分析结果转化为可交互的自助看板 |
+| 质量保障 | pytest · **ruff** · sqlfluff · GitHub Actions | CI 全绿 = 代码规范 + SQL 规范 + Docker 构建三重校验 |
+
+---
+
+## 局限与生产化路径
+
+| 局限 | 影响 | 生产化方案 |
+|------|------|-----------|
+| 10 天窗口 | 无法观察月度季节性；D7+ 留存右删失 | 扩展至 ≥90 天数据，引入 Prophet / ARIMA 预测 |
+| 无金额字段 | GMV、ARPU、CLV 无法计算；RFM 退化为 RF | 关联订单/交易表，补全 monetary 维度 |
+| 无用户属性 | 缺失 demographics、设备、渠道分段 | 关联用户画像表，支持多维 cohort 分析 |
+| A/B 测试为模拟 | 基于用户 ID 哈希的随机化分组 | 哈希随机化 + SRM 校验 + CUPED 方差缩减 |
+| 单节点执行 | DuckDB + 本地 Parquet | Hive / Spark on 分区 Parquet + Airflow 调度 |
+
+> A/B 测试框架实现了完整的统计管线（样本量计算 → 同质性校验 → 双比例 Z 检验 → Cohen's h → 95% CI）——哈希分组是真实实验元数据不可获取时的**有效**随机化策略，统计方法论可直接迁移至生产实验平台（如内部 AB 平台或 Optimizely）。
+
+---
+
+## 项目结构
 
 ```
 ecommerce-user-analytics/
-├── scripts/                      # Python utilities (3 scripts)
-│   ├── preprocess.py             #   Polars ETL (~0.4s for 29M rows)
-│   ├── pipeline.py               #   Full analysis pipeline
-│   └── generate_mock.py          #   Mock data generator
+├── scripts/                      # Python 工具脚本
+│   ├── preprocess.py             #   Polars ETL（~0.4s / 29M rows）
+│   ├── pipeline.py               #   完整分析管线编排
+│   ├── run_sql.py                #   DuckDB SQL 批量执行
+│   ├── validate_data.py          #   数据质量校验
+│   └── benchmark_preprocessing.py #  Polars vs Pandas 性能基准
 │
-├── notebooks/                    # Jupyter notebooks (5)
+├── notebooks/                    # Jupyter 分析笔记本（5 份）
 │   ├── 01_eda_and_visualization.ipynb
 │   ├── 02_user_churn_prediction.ipynb
 │   ├── 03_ab_test_analysis.ipynb
 │   ├── 04_recommendation_system.ipynb
 │   └── 05_cohort_and_ltv.ipynb
 │
-├── sql/                          # SQL analysis (7 scripts)
-│   ├── 01_database_setup.sql     #   Schema + indexes + views
-│   ├── 02_user_retention.sql     #   Retention (D1/D3/D7)
-│   ├── 03_conversion_funnel.sql  #   Funnel + path analysis
-│   ├── 04_rfm_model.sql          #   RFM segmentation
-│   ├── 05_ab_test_framework.sql  #   A/B test data prep
-│   ├── 06_anomaly_detection.sql  #   Outlier detection (3σ)
-│   └── 07_product_analysis.sql   #   Product & category
+├── sql/                          # SQL 分析脚本（7 份）
+│   ├── 01_database_setup.sql     #   Schema + 索引 + 视图
+│   ├── 02_user_retention.sql     #   留存分析（D1/D3/D7）
+│   ├── 03_conversion_funnel.sql  #   漏斗 + 路径分析
+│   ├── 04_rfm_model.sql          #   RFM 分群
+│   ├── 05_ab_test_framework.sql  #   A/B 测试数据准备
+│   ├── 06_anomaly_detection.sql  #   异常检测（3σ 规则）
+│   └── 07_product_analysis.sql   #   商品与品类分析
 │
-├── dbt/                          # dbt models + tests
+├── dbt/                          # dbt 数据模型 + 测试
 │   ├── models/staging/
 │   ├── models/intermediate/
 │   └── models/marts/
 │
-├── pyspark/                      # PySpark (4 scripts)
-├── dashboard/                    # Streamlit app
-├── images/                       # Generated charts
-└── reports/                      # Analysis reports
+├── pyspark/                      # PySpark 分布式计算（4 脚本）
+├── dashboard/                    # Streamlit 交互看板
+├── images/                       # 生成的图表
+├── reports/                      # 分析报告
+├── docs/                         # 架构决策记录（ADR）
+├── Makefile                      # 工作流编排
+└── requirements.txt
 ```
 
 ---
 
-## Modules
+## 相关资源
 
-| # | Module | Technique |
-|---|--------|-----------|
-| 1 | User Retention | Self-join + window functions (`ROW_NUMBER`, `LAG`) |
-| 2 | Conversion Funnel | CTE + conditional aggregation + path classification |
-| 3 | RFM Segmentation | `NTILE(5)` binning + lifecycle state migration |
-| 4 | A/B Test Framework | Two-proportion Z-test · Chi-squared · Cohen's h · 95% CI |
-| 5 | Churn Prediction | XGBoost vs Logistic Regression · 11-feature engineering · ROC |
-| 6 | Recommendation | UserCF (cosine similarity) · ALS (PySpark MLlib) |
-| 7 | Anomaly Detection | 3σ rule + moving average · Automated daily report with alerts |
-| 8 | Cohort & LTV | Cohort retention heatmap · Behavior-weighted value estimation |
-| 9 | Dashboard | Streamlit + Plotly · KPI cards · Funnel · RFM · Filters |
-| 10 | Data Engineering | dbt staging → intermediate → marts · 7 data quality tests |
+- [`docs/ADR.md`](docs/ADR.md) — 架构决策记录：为什么选 DuckDB、Polars、dbt，以及扁平化目录结构的设计考量
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — 本地环境搭建、开发工作流、lint 规则与 commit 规范
+- [`sql/README.md`](sql/README.md) — SQL 分析模块指南与数据库兼容性对照表
 
 ---
 
-## Tech Stack
+## 许可证
 
-| Layer | Tools |
-|-------|-------|
-| Processing | **Polars** (Rust, 60x faster than Pandas) · Pandas · **PySpark** |
-| SQL Engine | **DuckDB** (zero-config OLAP) |
-| Data Engineering | **dbt** (model versioning, testing, lineage) |
-| Modeling | Scikit-learn · **XGBoost** · SciPy |
-| Visualization | Matplotlib · Seaborn · **Plotly** |
-| Delivery | **Streamlit** (interactive dashboard) · Jupyter |
-| Version Control | Git · GitHub |
-
----
-
-## Limitations & Production Considerations
-
-| Limitation | Impact | Production Approach |
-|-----------|--------|-------------------|
-| 10-day window | Cannot observe monthly seasonality; D7+ retention is right-censored | ≥90 days of data for Prophet/ARIMA forecasting |
-| No monetary field | GMV, ARPU, CLV unavailable; RFM degrades to RF | Join with order/transaction table for full RFM |
-| No user attributes | Missing demographics, device, channel segmentation | Join with user profile table for cohort analysis |
-| Simulated A/B test | User-ID hash-based randomization as proxy when true experiment metadata unavailable | Hash-based randomization + SRM check + CUPED variance reduction |
-| Single-node execution | DuckDB + local Parquet, no distributed query engine | Hive/Spark on partitioned Parquet + Airflow scheduling |
-
-> The A/B test framework implements the complete statistical pipeline (sample size calculation → homogeneity check → two-proportion Z-test → Cohen's h → 95% CI) — the parity-based grouping is a **valid** randomization strategy when true experiment metadata is unavailable, and the statistical methodology transfers directly to production experiment platforms.
-
----
-
-## Resources
-
-- [`docs/ADR.md`](docs/ADR.md) — Architecture Decision Records: why DuckDB, Polars, dbt, and the flattened directory structure
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — Local setup, development workflow, lint rules, and commit conventions
-- [`sql/README.md`](sql/README.md) — SQL analysis module guide and database compatibility table
-
----
-
-## License
-
-Dataset provided by Alibaba Tianchi under its usage terms. Code is for educational purposes.
+数据集遵循阿里云天池的使用条款。代码采用 MIT License，仅供学习交流使用。
