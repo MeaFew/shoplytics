@@ -3,6 +3,17 @@
     description='用户分层宽表：RFM分层、用户标签和生命周期阶段'
 ) }}
 
+-- ============================================================
+-- 与 mart_rfm_segments 的区别：
+--   mart_user_segments: 从 stg_user_behavior 直接聚合，RFM 使用
+--     8 类精细化分层标签（重要价值/发展/保持/挽留 × 一般用户），
+--     额外输出 value_tier、activity_label、behavior_tag、
+--     lifecycle_stage 等运营标签，适合运营团队日常使用。
+--   mart_rfm_segments: 从 int_user_behavior_summary 读取，使用
+--     6 类简化分层标签（高价值/潜力/新用户/流失预警/沉睡/一般），
+--     专注 RFM 评分本身，适合数据团队进行标准化 RFM 分析。
+-- ============================================================
+
 -- 用户行为聚合（以整个数据周期为观察窗口）
 WITH user_behavior_summary AS (
     SELECT

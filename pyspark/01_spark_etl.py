@@ -52,7 +52,7 @@ def main():
     # ---------------------------------------------------------------------------
     spark = (
         SparkSession.builder
-        .appName("PDD-ETL-UserBehavior")
+        .appName("Ecommerce-ETL-UserBehavior")
         .master("local[*]")                      # 本地模式，使用所有 CPU 核心
         .config("spark.sql.adaptive.enabled", "true")          # AQE 自适应查询执行
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")

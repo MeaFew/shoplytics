@@ -50,7 +50,7 @@ def main():
     # ---------------------------------------------------------------------------
     spark = (
         SparkSession.builder
-        .appName("PDD-User-Profile")
+        .appName("Ecommerce-User-Profile")
         .master("local[*]")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")

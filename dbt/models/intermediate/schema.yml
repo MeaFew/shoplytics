@@ -2,35 +2,40 @@ version: 2
 
 models:
   - name: int_user_daily_metrics
-    description: "日级指标中间表：每日DAU、PV、购买量、加购量、收藏量及各类转化率"
+    description: "日级指标中间表：将原始行为数据按用户+日期聚合，为下游留存、LTV模型提供输入"
     columns:
+      - name: user_id
+        description: "用户ID"
+        tests:
+          - not_null
       - name: event_date
         description: "统计日期"
         tests:
           - not_null
-          - unique
-      - name: dau
-        description: "日活跃用户数"
+      - name: total_actions
+        description: "总行为次数"
       - name: pv_count
         description: "页面浏览量（点击次数）"
-      - name: buy_count
-        description: "购买次数"
-      - name: cart_count
-        description: "加购次数"
       - name: fav_count
         description: "收藏次数"
-      - name: purchase_conversion_rate
-        description: "购买转化率 = 购买次数 / 点击次数 * 100"
-      - name: cart_conversion_rate
-        description: "加购转化率 = 加购次数 / 点击次数 * 100"
-      - name: fav_conversion_rate
-        description: "收藏转化率 = 收藏次数 / 点击次数 * 100"
-      - name: overall_conversion_rate
-        description: "综合转化率 = (购买+加购+收藏) / 点击次数 * 100"
-      - name: avg_pv_per_user
-        description: "人均PV"
-      - name: avg_buy_per_user
-        description: "人均购买次数"
+      - name: cart_count
+        description: "加购次数"
+      - name: buy_count
+        description: "购买次数"
+      - name: unique_items
+        description: "去重商品数"
+      - name: unique_categories
+        description: "去重品类数"
+      - name: first_action_ts
+        description: "当天首次行为时间戳"
+      - name: last_action_ts
+        description: "当天最后行为时间戳"
+      - name: conversion_rate
+        description: "购买转化率 = 购买次数 / 点击次数"
+      - name: is_purchase_day
+        description: "是否为购买日（0/1）"
+      - name: is_cart_day
+        description: "是否为加购日（0/1）"
 
   - name: int_user_retention
     description: "留存分析中间表：每日新增用户及次日/3日/7日留存率"
@@ -83,5 +88,3 @@ models:
         description: "总体购买转化率(%)"
       - name: direct_buy_count
         description: "直接购买用户数（无加购/收藏）"
-      - name: cart_buy_rate
-        description: "加购后购买率(%)"

@@ -21,10 +21,10 @@ WITH user_item_behavior AS (
 funnel_counts AS (
     SELECT
         event_date,
-        COUNT(DISTINCT CASE WHEN has_pv = 1 THEN CONCAT(user_id, '_', item_id) END) AS pv_users,
-        COUNT(DISTINCT CASE WHEN has_fav = 1 THEN CONCAT(user_id, '_', item_id) END) AS fav_users,
-        COUNT(DISTINCT CASE WHEN has_cart = 1 THEN CONCAT(user_id, '_', item_id) END) AS cart_users,
-        COUNT(DISTINCT CASE WHEN has_buy = 1 THEN CONCAT(user_id, '_', item_id) END) AS buy_users
+        COUNT(DISTINCT CASE WHEN has_pv = 1 THEN (user_id, item_id) END) AS pv_users,
+        COUNT(DISTINCT CASE WHEN has_fav = 1 THEN (user_id, item_id) END) AS fav_users,
+        COUNT(DISTINCT CASE WHEN has_cart = 1 THEN (user_id, item_id) END) AS cart_users,
+        COUNT(DISTINCT CASE WHEN has_buy = 1 THEN (user_id, item_id) END) AS buy_users
     FROM user_item_behavior
     GROUP BY event_date
 ),
@@ -84,10 +84,6 @@ SELECT
         FROM path_stats ps
         WHERE ps.event_date = fc.event_date AND ps.conversion_path = 'pv->buy'
     ) AS direct_buy_count,
-    -- 加购后购买率
-    ROUND(
-        CASE WHEN fc.cart_users > 0 THEN fc.buy_users * 100.0 / fc.cart_users ELSE 0 END, 2
-    ) AS cart_buy_rate,
     CURRENT_TIMESTAMP AS _computed_at
 FROM funnel_counts fc
 ORDER BY fc.event_date

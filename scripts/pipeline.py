@@ -36,6 +36,7 @@ from config import (
     CLEANED_PARQUET_PATH,
     IMAGES_DIR,
     RANDOM_SEED,
+    BEHAVIOR_WEIGHTS,
     PROJECT_ROOT,
     ensure_dirs,
 )
@@ -522,7 +523,7 @@ def main() -> None:
         pl.col("behavior_type").filter(pl.col("behavior_type") == "buy").count().alias("buy"),
     ])
     lv = lv.with_columns(
-        (pl.col("pv") * 1 + pl.col("fav") * 3 + pl.col("cart") * 5 + pl.col("buy") * 10).alias("value_score")
+        (pl.col("pv") * BEHAVIOR_WEIGHTS["pv"] + pl.col("fav") * BEHAVIOR_WEIGHTS["fav"] + pl.col("cart") * BEHAVIOR_WEIGHTS["cart"] + pl.col("buy") * BEHAVIOR_WEIGHTS["buy"]).alias("value_score")
     )
     lv = lv.with_columns(
         (pl.col("value_score") * 3).alias("ltv_estimate")

@@ -8,7 +8,7 @@
 WITH daily_behavior AS (
     SELECT
         user_id,
-        date,
+        event_date,
         COUNT(*) AS total_actions,
         SUM(CASE WHEN behavior_type = 'pv'   THEN 1 ELSE 0 END) AS pv_count,
         SUM(CASE WHEN behavior_type = 'fav'  THEN 1 ELSE 0 END) AS fav_count,
@@ -16,15 +16,15 @@ WITH daily_behavior AS (
         SUM(CASE WHEN behavior_type = 'buy'  THEN 1 ELSE 0 END) AS buy_count,
         COUNT(DISTINCT item_id) AS unique_items,
         COUNT(DISTINCT category_id) AS unique_categories,
-        MIN(timestamp) AS first_action_ts,
-        MAX(timestamp) AS last_action_ts
+        MIN(event_timestamp) AS first_action_ts,
+        MAX(event_timestamp) AS last_action_ts
     FROM {{ ref('stg_user_behavior') }}
-    GROUP BY user_id, date
+    GROUP BY user_id, event_date
 )
 
 SELECT
     user_id,
-    date,
+    event_date,
     total_actions,
     pv_count,
     fav_count,

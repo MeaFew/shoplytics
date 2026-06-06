@@ -1,6 +1,14 @@
 -- ============================================================
 -- dbt mart: RFM 用户分层结果
 -- 用途: 基于 NTILE(5) 的 RFM 评分，输出用户生命周期分层
+--
+-- 与 mart_user_segments 的区别：
+--   mart_rfm_segments: 从 int_user_behavior_summary 读取，使用
+--     6 类简化分层标签（高价值/潜力/新用户/流失预警/沉睡/一般），
+--     专注 RFM 评分本身，适合数据团队进行标准化 RFM 分析。
+--   mart_user_segments: 从 stg_user_behavior 直接聚合，使用
+--     8 类精细化分层标签，额外输出 value_tier、activity_label、
+--     behavior_tag、lifecycle_stage 等运营标签，适合运营团队日常使用。
 -- ============================================================
 
 {{ config(materialized='table', schema='marts', tags=['business_ready']) }}

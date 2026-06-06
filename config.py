@@ -37,8 +37,8 @@ def ensure_dirs() -> None:
 
 # 分析参数
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
-TEST_SIZE = float(os.getenv("TEST_SIZE", "0.2"))
-CHURN_ACTIVE_DAYS_THRESHOLD = int(os.getenv("CHURN_ACTIVE_DAYS_THRESHOLD", "3"))
+TEST_SIZE = float(os.getenv("TEST_SIZE", "0.2"))  # 预留：模型训练测试集比例
+CHURN_ACTIVE_DAYS_THRESHOLD = int(os.getenv("CHURN_ACTIVE_DAYS_THRESHOLD", "3"))  # 预留：流失定义阈值
 
 # 时间范围（数据集时间窗口）
 START_DATE = "2017-11-24"
@@ -53,5 +53,5 @@ BEHAVIOR_WEIGHTS = {
 }
 
 # A/B 测试参数
-AB_TEST_SPLIT_DATE = "2017-12-01"
-AB_TEST_SIGNIFICANCE_LEVEL = 0.05
+AB_TEST_SPLIT_DATE = "2017-12-01"  # 预留：A/B测试分组日期
+AB_TEST_SIGNIFICANCE_LEVEL = 0.05  # 预留：A/B测试显著性水平

@@ -29,7 +29,7 @@ models:
       - name: event_hour
         description: "行为发生的小时（0-23）"
       - name: day_of_week
-        description: "星期几（0=周日, 6=周六）"
+        description: "星期几（0=周一, 6=周日）"
       - name: is_weekend
         description: "是否为周末（1=是, 0=否）"
       - name: time_period

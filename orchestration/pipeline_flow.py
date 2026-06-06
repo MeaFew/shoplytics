@@ -41,7 +41,7 @@ def preprocess_data(input_path: str | None = None,
     result = subprocess.run([
         "python", "scripts/preprocess.py",
         "--input", inp,
-        "--output", out,
+        "--output-dir", out,
     ], capture_output=True, text=True)
     print(result.stdout[-500:])
     if result.returncode != 0:
@@ -124,5 +124,6 @@ if __name__ == "__main__":
         print("Prefect not installed. Running tasks sequentially...")
         print(preprocess_data.fn())
         print(run_sql_analysis.fn())
+        print(run_dbt_models.fn())
         print(run_modeling_pipeline.fn())
         print("Done — install Prefect (pip install prefect) for full orchestration.")

@@ -35,10 +35,24 @@
 |-----------|-------|
 | **Source** | Alibaba Tianchi — "Taobao User Behavior" Open Dataset |
 | **Scale** | 287,004 users · 2,584,623 items · **29,128,402 records** |
-| **Time Window** | Timestamps span 84 days (2017-04 ~ 2018-01); **99.96% of data concentrates in 2017-11-25 ~ 2017-12-03 (9 days)** |
+| **Time Window** | Timestamps span 84 days (2017-04 ~ 2018-01); **99.96% of data concentrates in 2017-11-24 ~ 2017-12-03 (10 days)** |
 | **Behaviors** | `pv` (page view) · `buy` · `cart` · `fav` |
 
 > Second-level timestamps enable fine-grained behavioral sequence modeling; the 29M-row scale provides a solid testbed for benchmarking modern analytics tools like Polars / DuckDB.
+
+### Dataset Statistics (Community Reference)
+
+> This is an open dataset (not a competition). The metrics below are drawn from common community analyses and serve as reference for data scale and business benchmarks:
+
+| Metric | Value | Description |
+|--------|-------|-------------|
+| Total Page Views (PV) | 3,431,900 | 10-day cumulative |
+| Total Unique Visitors (UV) | 37,376 | Deduplicated users |
+| Bounce Rate | **5.87%** | PV only, no other behavior |
+| PV → Purchase Conversion | **2.2%** | Overall conversion |
+| PV → Cart Add Conversion | **58.8%** | Product detail page effectiveness |
+| Cart → Purchase Conversion | **38.9%** | Cart recovery potential |
+| Repurchase Rate | **65.8%** | Users with 2+ purchases |
 
 ---
 

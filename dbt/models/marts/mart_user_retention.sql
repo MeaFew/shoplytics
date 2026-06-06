@@ -8,7 +8,7 @@
 WITH first_active AS (
     SELECT
         user_id,
-        MIN(date) AS cohort_date
+        MIN(event_date) AS cohort_date
     FROM {{ ref('int_user_daily_metrics') }}
     GROUP BY user_id
 ),
@@ -16,13 +16,13 @@ WITH first_active AS (
 retention AS (
     SELECT
         fa.cohort_date,
-        dm.date AS activity_date,
-        DATE_DIFF('day', fa.cohort_date, dm.date) AS day_diff,
+        dm.event_date AS activity_date,
+        DATE_DIFF('day', fa.cohort_date, dm.event_date) AS day_diff,
         COUNT(DISTINCT dm.user_id) AS retained_users
     FROM first_active fa
     JOIN {{ ref('int_user_daily_metrics') }} dm
         ON fa.user_id = dm.user_id
-    GROUP BY fa.cohort_date, dm.date
+    GROUP BY fa.cohort_date, dm.event_date
 ),
 
 cohort_size AS (

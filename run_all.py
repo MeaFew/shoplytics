@@ -26,8 +26,8 @@ def run(cmd: str, cwd: Path | None = None):
 def main():
     here = Path(__file__).resolve().parent
 
-    # Note: sql and dbt steps require DuckDB and dbt to be installed/configured.
-    # This runner focuses on the core Python pipeline.
+    # Note: the pipeline covers all four steps:
+    # preprocessing (Python), SQL analysis (DuckDB), dbt models/tests, and analysis pipeline (Python).
     steps = [
         ("Preprocessing", "python scripts/preprocess.py --input data/raw/UserBehavior.csv --output data/processed/"),
         ("SQL Analysis", "python scripts/run_sql.py"),
