@@ -54,6 +54,10 @@ make all
 # Launch the interactive dashboard
 make dashboard
 
+# Launch Apache Superset BI (requires Docker)
+docker compose -f docker-compose.superset.yml up -d
+# Open http://localhost:8088, login: admin / admin
+
 # Local quality gates (mirrors CI)
 make verify
 ```
@@ -131,7 +135,7 @@ make verify
 | Data Engineering | **dbt** | Model versioning, lineage tracking, automated testing — elevates analytics SQL from scripts to engineered pipelines |
 | Statistical Modeling | scikit-learn · **XGBoost** · SciPy · statsmodels | XGBoost handles high-dimensional sparse features; statsmodels provides classical statistical inference |
 | Visualization | Matplotlib · Seaborn · **Plotly** | Plotly interactive charts embed directly into Streamlit |
-| Delivery | **Streamlit** · Jupyter | Streamlit transforms analysis results into interactive self-service dashboards |
+| Delivery | **Streamlit** · **Apache Superset** · Jupyter | Streamlit for lightweight self-service dashboards; Superset (Docker) for enterprise BI exploration |
 | Quality Assurance | pytest · **ruff** · sqlfluff · GitHub Actions | All-green CI = code style + SQL style + Docker build triple validation |
 
 ---
@@ -184,12 +188,47 @@ ecommerce-user-analytics/
 │
 ├── pyspark/                      # PySpark distributed computing (4 scripts)
 ├── dashboard/                    # Streamlit interactive dashboard
+├── superset/                     # Apache Superset BI configuration
+│   ├── superset_config.py        #   Custom Superset configuration
+│   └── add_duckdb.py             #   DuckDB datasource auto-registration
 ├── images/                       # Generated charts
 ├── reports/                      # Analysis reports
 ├── docs/                         # Architecture Decision Records (ADR)
+├── docker-compose.superset.yml   # Superset Docker Compose configuration
 ├── Makefile                      # Workflow orchestration
 └── requirements.txt
 ```
+
+---
+
+## BI Dashboard (Apache Superset)
+
+In addition to the lightweight Streamlit dashboard, the project integrates **Apache Superset** (Docker) as an enterprise-grade BI exploration tool:
+
+```bash
+# Start Superset (requires Docker)
+docker compose -f docker-compose.superset.yml up -d
+
+# First startup takes ~1–2 minutes for initialization
+# Open http://localhost:8088
+# Login: admin / Password: admin
+```
+
+**Pre-configured:**
+- DuckDB datasource auto-connected (`analytics.duckdb`)
+- SQL Lab for ad-hoc queries on 29M rows
+- Explore interface for drag-and-drop chart creation (DAU trends, conversion funnels, category distributions)
+
+**Why keep both Streamlit + Superset?**
+
+| Dimension | Streamlit | Apache Superset |
+|-----------|-----------|-----------------|
+| Positioning | Lightweight self-service dashboard | Enterprise BI exploration |
+| Use Case | Fixed KPI monitoring | Ad-hoc analysis, drill-down, multi-dimensional slicing |
+| Development | Python code | Zero-code drag-and-drop + SQL |
+| Audience | Product managers / Operations | Data analysts / Management |
+
+> In production, Streamlit suits fixed dashboards embedded in business systems; Superset serves analyst self-service exploration. They complement rather than replace each other.
 
 ---
 
