@@ -22,7 +22,7 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check scripts/ dashboard/ pyspark/ --ignore E501,F401,E402
+          ruff check scripts/ dashboard/ pyspark/ tests/ --ignore E501,F401,E402
 
   sql-lint:
     runs-on: ubuntu-latest
@@ -35,6 +35,22 @@ jobs:
       - name: Lint SQL
         run: |
           sqlfluff lint sql/ --dialect duckdb --ignore parsing
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pytest statsmodels
+
+      - name: Run tests
+        run: pytest tests/ -v
 
   docker-build:
     runs-on: ubuntu-latest
