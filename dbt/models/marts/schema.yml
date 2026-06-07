@@ -15,16 +15,42 @@ models:
         description: "页面浏览量"
       - name: buy_count
         description: "购买次数"
+      - name: cart_count
+        description: "加购次数"
+      - name: fav_count
+        description: "收藏次数"
       - name: purchase_conversion_rate
         description: "购买转化率(%)"
+      - name: cart_conversion_rate
+        description: "加购转化率(%)"
+      - name: fav_conversion_rate
+        description: "收藏转化率(%)"
+      - name: overall_conversion_rate
+        description: "整体转化率(%)"
+      - name: avg_pv_per_user
+        description: "人均PV"
+      - name: avg_buy_per_user
+        description: "人均购买次数"
       - name: retention_d1_rate
         description: "次日留存率(%)"
+      - name: retention_d3_rate
+        description: "3日留存率(%)"
+      - name: retention_d7_rate
+        description: "7日留存率(%)"
       - name: new_users
         description: "新增用户数"
+      - name: funnel_pv
+        description: "漏斗PV用户数"
+      - name: funnel_buy
+        description: "漏斗购买用户数"
+      - name: funnel_buy_rate
+        description: "漏斗购买转化率(%)"
       - name: dau_change
         description: "DAU环比绝对变化"
       - name: dau_change_pct
         description: "DAU环比变化百分比(%)"
+      - name: conversion_change
+        description: "转化率环比变化"
       - name: dau_anomaly_flag
         description: "DAU异常标记：normal/abnormal（3σ原则）"
       - name: conversion_anomaly_flag
@@ -33,6 +59,8 @@ models:
         description: "留存率异常标记"
       - name: health_score
         description: "综合健康度评分（0-100）"
+      - name: _computed_at
+        description: "计算时间戳"
 
   - name: mart_user_segments
     description: "用户分层宽表：RFM分层结果、用户标签和生命周期阶段，面向业务使用"
@@ -48,6 +76,20 @@ models:
         description: "活跃天数"
       - name: monetary
         description: "购买次数（价值代理）"
+      - name: first_active_date
+        description: "首次活跃日期"
+      - name: last_active_date
+        description: "最后活跃日期"
+      - name: pv_count
+        description: "浏览量"
+      - name: cart_count
+        description: "加购次数"
+      - name: fav_count
+        description: "收藏次数"
+      - name: unique_items
+        description: "去重商品数"
+      - name: unique_categories
+        description: "去重品类数"
       - name: r_score
         description: "R评分（1-5）"
       - name: f_score
@@ -66,3 +108,49 @@ models:
         description: "生命周期阶段：新用户/成长用户/成熟用户/活跃用户/潜在用户"
       - name: personal_conversion_rate
         description: "个人购买转化率(%)"
+      - name: _computed_at
+        description: "计算时间戳"
+
+  - name: mart_rfm_segments
+    description: "RFM标准分层结果：基于int_user_behavior_summary的NTILE(5)评分，6类简化分层标签，适合数据团队标准化RFM分析"
+    columns:
+      - name: user_id
+        description: "用户唯一标识"
+        tests:
+          - not_null
+      - name: recency_days
+        description: "距最后活跃日期的天数"
+      - name: frequency
+        description: "活跃天数"
+      - name: monetary
+        description: "购买次数（价值代理）"
+      - name: r_score
+        description: "Recency评分（1-5，越大越活跃）"
+      - name: f_score
+        description: "Frequency评分（1-5，越大越频繁）"
+      - name: m_score
+        description: "Monetary评分（1-5，越大购买越多）"
+      - name: rfm_score
+        description: "综合RFM得分（r_score*100 + f_score*10 + m_score）"
+      - name: segment_label
+        description: "分层标签：高价值用户/潜力用户/新用户/流失预警/沉睡用户/一般用户"
+
+  - name: mart_user_retention
+    description: "用户留存宽表：按cohort_date和day_diff计算D1/D3/D7留存率"
+    columns:
+      - name: cohort_date
+        description: "用户首日活跃日期（cohort）"
+        tests:
+          - not_null
+      - name: day_diff
+        description: "距首日的天数差（1/3/7）"
+        tests:
+          - not_null
+      - name: retained_users
+        description: "留存用户数"
+      - name: cohort_users
+        description: "该cohort的总用户数"
+      - name: retention_rate
+        description: "留存率（小数形式，如0.7354）"
+      - name: retention_label
+        description: "留存标签：D1/D3/D7"

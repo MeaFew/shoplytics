@@ -79,10 +79,12 @@ SELECT
         CASE WHEN fc.pv_users > 0 THEN fc.buy_users * 100.0 / fc.pv_users ELSE 0 END, 2
     ) AS overall_buy_rate,
     -- 直接购买率（无加购/收藏直接购买）
-    (
-        SELECT path_count
-        FROM path_stats ps
-        WHERE ps.event_date = fc.event_date AND ps.conversion_path = 'pv->buy'
+    COALESCE(
+        (
+            SELECT path_count
+            FROM path_stats ps
+            WHERE ps.event_date = fc.event_date AND ps.conversion_path = 'pv->buy'
+        ), 0
     ) AS direct_buy_count,
     CURRENT_TIMESTAMP AS _computed_at
 FROM funnel_counts fc

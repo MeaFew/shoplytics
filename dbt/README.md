@@ -1,4 +1,4 @@
-# dbt 项目：拼多多电商数据分析
+# dbt 项目：淘宝电商数据分析
 
 ## 什么是 dbt？
 
@@ -36,7 +36,9 @@ dbt/
 │   ├── assert_unique_user_id.sql
 │   ├── assert_non_null_behavior.sql
 │   ├── assert_valid_timestamp.sql
-│   └── assert_positive_counts.sql
+│   ├── assert_funnel_positive.sql
+│   ├── assert_retention_positive.sql
+│   └── assert_daily_metrics_positive.sql
 └── README.md
 ```
 
@@ -172,7 +174,9 @@ dbt compile --select int_user_daily_metrics
 | `assert_unique_user_id.sql` | 检查同一用户对同一商品单日行为是否异常过量 |
 | `assert_non_null_behavior.sql` | 检查 behavior_type 非空且值合法 |
 | `assert_valid_timestamp.sql` | 检查时间戳在有效范围内 |
-| `assert_positive_counts.sql` | 检查所有指标计数非负 |
+| `assert_funnel_positive.sql` | 检查漏斗转化率指标计数非负 |
+| `assert_retention_positive.sql` | 检查留存率指标计数非负 |
+| `assert_daily_metrics_positive.sql` | 检查每日指标计数非负 |
 
 此外，`schema.yml` 中还定义了以下内置测试：
 - `not_null`：关键字段非空
@@ -201,4 +205,4 @@ dbt compile --select int_user_daily_metrics
 
 ## 作者
 
-2026 数据工程师 | 拼多多数据分析师求职项目
+2026 数据工程师 | 淘宝数据分析师求职项目

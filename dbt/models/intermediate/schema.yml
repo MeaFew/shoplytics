@@ -88,3 +88,36 @@ models:
         description: "总体购买转化率(%)"
       - name: direct_buy_count
         description: "直接购买用户数（无加购/收藏）"
+
+  - name: int_user_behavior_summary
+    description: "用户行为汇总（全周期）：汇总每个用户在整个观察期内的行为特征，用于流失预测和RFM"
+    columns:
+      - name: user_id
+        description: "用户ID"
+        tests:
+          - not_null
+          - unique
+      - name: active_days
+        description: "活跃天数"
+      - name: total_actions
+        description: "总行为次数"
+      - name: total_pv
+        description: "总PV数"
+      - name: total_fav
+        description: "总收藏数"
+      - name: total_cart
+        description: "总加购数"
+      - name: total_buy
+        description: "总购买数"
+      - name: purchase_days
+        description: "有购买行为的天数"
+      - name: cart_days
+        description: "有加购行为的天数"
+      - name: unique_items_touched
+        description: "交互过的去重商品数"
+      - name: first_active_date
+        description: "首次活跃日期"
+      - name: last_active_date
+        description: "最后活跃日期"
+      - name: overall_conversion_rate
+        description: "整体转换率（购买次数/PV次数）"
