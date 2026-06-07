@@ -34,7 +34,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Source** | Alibaba Tianchi — "Taobao User Behavior" Open Dataset |
-| **Scale** | 287,004 users · 2,584,151 items · **29,116,710 records** |
+| **Scale** | 287,004 users · 2,584,623 items · **29,128,402 records** |
 | **Time Window** | Timestamps span 84 days (2017-04 ~ 2018-01); **99.96% of data concentrates in 2017-11-25 ~ 2017-12-03 (9 days)** |
 | **Behaviors** | `pv` (page view) · `buy` · `cart` · `fav` |
 

@@ -30,7 +30,7 @@ EXPECTED_COLUMNS = {
     "category_id": pl.Int64,
     "behavior_type": pl.Utf8,
     "timestamp": pl.Int64,
-    "date": pl.Date,
+    "date": pl.Utf8,  # CSV 中 date 为 YYYY-MM-DD 字符串
     "hour": pl.Int64,
     "day_of_week": pl.Int64,
     "is_weekend": pl.Int64,
@@ -38,7 +38,7 @@ EXPECTED_COLUMNS = {
 }
 
 EXPECTED_BEHAVIORS = {"pv", "buy", "cart", "fav"}
-DATE_RANGE = ("2017-11-25", "2017-12-04")
+DATE_RANGE = ("2017-11-24", "2017-12-03")
 
 
 def validate(path: Path) -> list[str]:
