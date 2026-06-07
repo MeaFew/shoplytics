@@ -36,6 +36,8 @@ from config import (
     CLEANED_PARQUET_PATH,
     IMAGES_DIR,
     RANDOM_SEED,
+    TEST_SIZE,
+    CHURN_ACTIVE_DAYS_THRESHOLD,
     BEHAVIOR_WEIGHTS,
     PROJECT_ROOT,
     ensure_dirs,
@@ -56,6 +58,10 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger("pipeline")
+
+
+# 推荐系统参数
+TOP_USERS_LIMIT = 500  # 协同过滤中使用的高购买用户数上限
 
 
 def section(title: str) -> None:
@@ -225,7 +231,7 @@ def main() -> None:
         ])
 
         user_stats = user_stats.with_columns(
-            pl.when(pl.col("active_days") <= 3).then(1).otherwise(0).alias("churn")
+            pl.when(pl.col("active_days") <= CHURN_ACTIVE_DAYS_THRESHOLD).then(1).otherwise(0).alias("churn")
         )
         return user_stats
 
@@ -251,7 +257,7 @@ def main() -> None:
     logger.info(f"Churn rate: {y.mean()*100:.1f}%")
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_SEED, stratify=y
+        X, y, test_size=TEST_SIZE, random_state=RANDOM_SEED, stratify=y
     )
 
     # Logistic Regression
@@ -392,7 +398,7 @@ def main() -> None:
         .agg(pl.len().alias("buy_count"))
         .filter(pl.col("buy_count") >= 2)
         .sort("buy_count", descending=True)
-        .head(500)
+        .head(TOP_USERS_LIMIT)
     )
 
     buy_data = (

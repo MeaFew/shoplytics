@@ -46,7 +46,7 @@ def preprocess_data(input_path: str | None = None,
     print(result.stdout[-500:])
     if result.returncode != 0:
         raise RuntimeError(result.stderr)
-    return f"Preprocessed → {output_dir}"
+    return f"Preprocessed → {out}"
 
 
 @task(name="run-sql-analysis", retries=1, tags=["sql"])

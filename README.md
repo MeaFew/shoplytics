@@ -23,7 +23,7 @@
 ## 项目亮点
 
 - **量级**：在单机上以 **~0.4 秒**完成 2,900 万行数据的清洗与特征工程（Polars 向量化执行）
-- **工程化**：dbt 数据模型分层（staging → intermediate → marts）+ 7 项数据质量测试 + GitHub Actions 三检查（lint / sql-lint / docker-build）
+- **工程化**：dbt 数据模型分层（staging → intermediate → marts）+ 10+ 项数据质量测试 + GitHub Actions 四检查（lint / sql-lint / test / docker-build）
 - **方法论完整**：从用户留存、转化漏斗、RFM 分群到 A/B 测试、流失预测、协同过滤推荐，覆盖用户生命周期全链路
 - **生产级思考**：每个分析模块均附带「局限 → 生产化路径」的完整推演，而非停留在 toy example
 
@@ -137,7 +137,7 @@ make verify
 | 7 | **异常检测** | 3σ 规则 + 移动平均 | 自动化日报 + 异常行为告警 |
 | 8 | **Cohort & LTV** |  cohort 留存热力图 · 行为加权价值估计 | 用户群组生命周期价值追踪 |
 | 9 | **交互看板** | Streamlit + Plotly · KPI 卡片 · 漏斗 · RFM | 产品/运营团队的自助分析工具 |
-| 10 | **数据工程** | dbt 模型分层 · 7 项数据质量测试 | 可版本控制的分析数据管线 |
+| 10 | **数据工程** | dbt 模型分层 · 10+ 项数据质量测试 | 可版本控制的分析数据管线 |
 
 ---
 

@@ -138,9 +138,11 @@ def main():
         .withColumn("month", month(col("event_time")))                # 月
         .withColumn("day", dayofmonth(col("event_time")))            # 日
         .withColumn("hour", hour(col("event_time")))                  # 小时
-        .withColumn("day_of_week", dayofweek(col("event_time")))      # 星期几 (1=Sunday, 7=Saturday)
-        # 是否周末：周六(7) 或 周日(1)
-        .withColumn("is_weekend", when(col("day_of_week").isin(1, 7), lit(1)).otherwise(lit(0)))
+        # day_of_week: 与 preprocess.py 保持一致, 0=周一, 6=周日
+        # Spark dayofweek() 返回 1=周日, 7=周六; 减去2并取模转换为 0=周一
+        .withColumn("day_of_week", ((dayofweek(col("event_time")) - 2) % 7).cast("int"))
+        # 是否周末：周六(5) 或 周日(6)
+        .withColumn("is_weekend", when(col("day_of_week") >= 5, lit(1)).otherwise(lit(0)))
         # 行为类型数值化（便于后续机器学习使用）
         .withColumn("behavior_score",
             when(col("behavior_type") == "pv", lit(1))

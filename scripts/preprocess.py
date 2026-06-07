@@ -257,8 +257,8 @@ def main() -> None:
     logger.info(f"清洗完成: 原始 {report.original_count:,} 条 → 清洗后 {report.cleaned_count:,} 条")
 
     # 7. 保存
-    csv_out = output_dir / "user_behavior_cleaned.csv"
-    parquet_out = output_dir / "user_behavior_cleaned.parquet"
+    csv_out = CLEANED_CSV_PATH
+    parquet_out = CLEANED_PARQUET_PATH
     save_processed_data(df_final, csv_out, parquet_out)
 
     # 8. 保存质量报告

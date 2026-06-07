@@ -21,7 +21,6 @@ PySpark 分布式推荐算法脚本（基于 ALS 矩阵分解）
 
 import os
 import shutil
-import random
 import sys
 from pathlib import Path
 
@@ -206,9 +205,6 @@ def main():
     # 8. 为指定用户生成 Top-N 推荐
     # ---------------------------------------------------------------------------
     print(f"[INFO] 为指定用户生成 Top-{TOP_N} 推荐...")
-
-    # 获取所有用户索引
-    all_users = df_rating.select("user_idx").distinct()
 
     # 为所有用户生成推荐（Top-N）
     user_recs = model.recommendForAllUsers(TOP_N)

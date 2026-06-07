@@ -85,7 +85,7 @@ SELECT
     ROUND((dm.pv_count - s.avg_pv) / NULLIF(s.std_pv, 0), 2) AS pv_zscore,
     ROUND((dm.buy_count - s.avg_buy) / NULLIF(s.std_buy, 0), 2) AS buy_zscore,
     ROUND((dm.conversion_rate - s.avg_rate) / NULLIF(s.std_rate, 0), 2) AS rate_zscore,
-    -- 标记异常: |z-score| > 2 为关注，> 3 为异常（9天数据样本小，放宽到2σ）
+    -- 标记异常: |z-score| > 2 为关注，> 3 为异常（10天数据样本小，放宽到2σ）
     CASE 
         WHEN ABS((dm.dau - s.avg_dau) / NULLIF(s.std_dau, 0)) > 2 THEN 'DAU异常'
         WHEN ABS((dm.pv_count - s.avg_pv) / NULLIF(s.std_pv, 0)) > 2 THEN 'PV异常'

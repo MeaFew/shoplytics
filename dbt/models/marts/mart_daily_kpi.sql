@@ -1,9 +1,51 @@
 {{ config(
     materialized='table',
-    description='核心KPI宽表：整合所有日级指标，添加环比变化和3σ异常标记'
-) }}
+    description='核心KPI宽表：整合所有日级指标，添加环比变化和3σ异常标记')
+}}
 
-WITH daily_kpi_base AS (
+-- 日级聚合：计算DAU和转化率
+WITH daily_agg AS (
+    SELECT
+        event_date,
+        COUNT(DISTINCT user_id) AS dau,
+        SUM(total_actions) AS total_actions,
+        SUM(pv_count) AS pv_count,
+        SUM(buy_count) AS buy_count,
+        SUM(cart_count) AS cart_count,
+        SUM(fav_count) AS fav_count,
+        SUM(unique_items) AS unique_items,
+        SUM(unique_categories) AS unique_categories,
+        COUNT(DISTINCT CASE WHEN is_purchase_day = 1 THEN user_id END) AS buyers,
+        COUNT(*) AS active_users,
+        -- 购买转化率（buy_count / pv_count）
+        ROUND(
+            CASE WHEN SUM(pv_count) > 0 THEN CAST(SUM(buy_count) AS REAL) * 100.0 / SUM(pv_count) ELSE 0 END, 2
+        ) AS purchase_conversion_rate,
+        -- 加购转化率
+        ROUND(
+            CASE WHEN SUM(pv_count) > 0 THEN CAST(SUM(cart_count) AS REAL) * 100.0 / SUM(pv_count) ELSE 0 END, 2
+        ) AS cart_conversion_rate,
+        -- 收藏转化率
+        ROUND(
+            CASE WHEN SUM(pv_count) > 0 THEN CAST(SUM(fav_count) AS REAL) * 100.0 / SUM(pv_count) ELSE 0 END, 2
+        ) AS fav_conversion_rate,
+        -- 整体转化率（总购买 / 总行为）
+        ROUND(
+            CASE WHEN SUM(total_actions) > 0 THEN CAST(SUM(buy_count) AS REAL) * 100.0 / SUM(total_actions) ELSE 0 END, 2
+        ) AS overall_conversion_rate,
+        -- 人均PV
+        ROUND(
+            CASE WHEN COUNT(DISTINCT user_id) > 0 THEN CAST(SUM(pv_count) AS REAL) / COUNT(DISTINCT user_id) ELSE 0 END, 2
+        ) AS avg_pv_per_user,
+        -- 人均购买
+        ROUND(
+            CASE WHEN COUNT(DISTINCT user_id) > 0 THEN CAST(SUM(buy_count) AS REAL) / COUNT(DISTINCT user_id) ELSE 0 END, 2
+        ) AS avg_buy_per_user
+    FROM {{ ref('int_user_daily_metrics') }}
+    GROUP BY event_date
+),
+
+daily_kpi_base AS (
     SELECT
         dm.event_date,
         dm.dau,
@@ -26,7 +68,7 @@ WITH daily_kpi_base AS (
         COALESCE(f.pv_users, dm.pv_count) AS funnel_pv,
         COALESCE(f.buy_users, dm.buy_count) AS funnel_buy,
         COALESCE(f.overall_buy_rate, dm.purchase_conversion_rate) AS funnel_buy_rate
-    FROM {{ ref('int_user_daily_metrics') }} dm
+    FROM daily_agg dm
     LEFT JOIN {{ ref('int_user_retention') }} r
         ON dm.event_date = r.event_date
     LEFT JOIN {{ ref('int_conversion_funnel') }} f

@@ -32,10 +32,11 @@ def pandas_pipeline(csv_path: Path) -> dict[str, float]:
     df["hour"] = pd.to_datetime(df["timestamp"], unit="s").dt.hour
     df["day_of_week"] = pd.to_datetime(df["timestamp"], unit="s").dt.weekday
     df["is_weekend"] = df["day_of_week"].apply(lambda x: 1 if x >= 5 else 0)
+    # NOTE: time_period划分与 preprocess.py 保持一致（6档中文标签）
     df["time_period"] = pd.cut(
         df["hour"],
-        bins=[-1, 6, 12, 18, 24],
-        labels=["dawn", "morning", "afternoon", "evening"],
+        bins=[-1, 6, 12, 14, 18, 22, 24],
+        labels=["凌晨", "上午", "中午", "下午", "晚上", "深夜"],
     ).astype(str)
     elapsed = time.perf_counter() - t0
     return {"rows": len(df), "elapsed_seconds": round(elapsed, 3)}
@@ -56,13 +57,18 @@ def polars_pipeline(csv_path: Path) -> dict[str, float]:
     )
     df = df.with_columns(
         pl.when(pl.col("day_of_week") >= 5).then(1).otherwise(0).alias("is_weekend"),
-        pl.when(pl.col("hour") <= 6)
-        .then(pl.lit("dawn"))
-        .when(pl.col("hour") <= 12)
-        .then(pl.lit("morning"))
-        .when(pl.col("hour") <= 18)
-        .then(pl.lit("afternoon"))
-        .otherwise(pl.lit("evening"))
+        # NOTE: time_period划分与 preprocess.py 保持一致（6档中文标签）
+        pl.when(pl.col("hour") < 6)
+        .then(pl.lit("凌晨"))
+        .when(pl.col("hour") < 12)
+        .then(pl.lit("上午"))
+        .when(pl.col("hour") < 14)
+        .then(pl.lit("中午"))
+        .when(pl.col("hour") < 18)
+        .then(pl.lit("下午"))
+        .when(pl.col("hour") < 22)
+        .then(pl.lit("晚上"))
+        .otherwise(pl.lit("深夜"))
         .alias("time_period"),
     )
     elapsed = time.perf_counter() - t0
