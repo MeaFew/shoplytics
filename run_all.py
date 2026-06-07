@@ -4,6 +4,7 @@ Replaces `make all` on systems without GNU Make (e.g., Windows).
 Usage: python run_all.py
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -13,7 +14,9 @@ def run(cmd: str, cwd: Path | None = None):
     print(f"\n{'=' * 60}")
     print(f">>> {cmd}")
     print("=" * 60)
-    result = subprocess.run(cmd, shell=True, cwd=cwd)
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(cwd) if cwd else "."
+    result = subprocess.run(cmd, shell=True, cwd=cwd, env=env)
     if result.returncode != 0:
         print(f"WARNING: Command failed with exit code {result.returncode}")
         return False
