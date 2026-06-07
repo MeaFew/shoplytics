@@ -26,7 +26,7 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, count, countDistinct, sum as spark_sum, max as spark_max,
-    when, lit, row_number, datediff, current_date, ntile
+    when, lit, row_number, datediff, ntile
 )
 from pyspark.sql.window import Window
 

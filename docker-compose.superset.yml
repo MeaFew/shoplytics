@@ -34,7 +34,7 @@ services:
     # 安装 duckdb-engine 并启动
     command: >
       bash -c "
-        pip install duckdb-engine>=0.10.0 --quiet &&
+        pip install duckdb-engine>=0.10.0 -q &&
         superset db upgrade &&
         superset fab create-admin --username admin --firstname Admin --lastname User --email admin@example.com --password admin || true &&
         superset init &&

@@ -6,7 +6,7 @@
 -- ============================================================
 -- 与 mart_rfm_segments 的区别：
 --   mart_user_segments: 从 stg_user_behavior 直接聚合，RFM 使用
---     8 类精细化分层标签（重要价值/发展/保持/挽留 × 一般用户），
+--     9 类标签（8 类精细化 + 1 类流失风险 fallback），
 --     额外输出 value_tier、activity_label、behavior_tag、
 --     lifecycle_stage 等运营标签，适合运营团队日常使用。
 --   mart_rfm_segments: 从 int_user_behavior_summary 读取，使用
@@ -117,10 +117,10 @@ user_segments AS (
         END AS activity_label,
         -- 购买偏好标签
         CASE
-            WHEN buy_count > 0 AND cart_count > 0 AND fav_count > 0 THEN '全链路用户'
-            WHEN buy_count > 0 AND cart_count > 0 THEN '加购购买型'
-            WHEN buy_count > 0 AND fav_count > 0 THEN '收藏购买型'
-            WHEN buy_count > 0 THEN '直接购买型'
+            WHEN monetary > 0 AND cart_count > 0 AND fav_count > 0 THEN '全链路用户'
+            WHEN monetary > 0 AND cart_count > 0 THEN '加购购买型'
+            WHEN monetary > 0 AND fav_count > 0 THEN '收藏购买型'
+            WHEN monetary > 0 THEN '直接购买型'
             WHEN cart_count > 0 OR fav_count > 0 THEN '意向用户'
             ELSE '浏览用户'
         END AS behavior_tag,
@@ -134,7 +134,7 @@ user_segments AS (
         END AS lifecycle_stage,
         -- 购买转化率（个人）
         ROUND(
-            CASE WHEN pv_count > 0 THEN buy_count * 100.0 / pv_count ELSE 0 END, 2
+            CASE WHEN pv_count > 0 THEN monetary * 100.0 / pv_count ELSE 0 END, 2
         ) AS personal_conversion_rate
     FROM rfm_scores
 )

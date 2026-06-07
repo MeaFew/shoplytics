@@ -1,7 +1,7 @@
 [sqlfluff]
 dialect = duckdb
 max_line_length = 120
-exclude_rules = LT01,LT02,LT05,LT08,LT09,LT14,AL03,AL01,AL04,AL10,AM04,AM05,CP03,RF02,RF04,ST03,ST05,ST06,ST09
+exclude_rules = LT01,LT02,AL04
 
 
 [sqlfluff:indentation]

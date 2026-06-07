@@ -33,7 +33,7 @@ dashboard:
 test:
 	pytest tests/ -v
 
-verify: lint format-check test audit
+verify: format-check test audit
 	ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/ --ignore E501,F401,E402
 	sqlfluff lint sql/
 	pytest tests/ -v
@@ -55,4 +55,4 @@ format-check:
 	ruff format --check scripts/ dashboard/ pyspark/
 
 audit:
-	$(PYTHON) scripts/audit_consistency.py
+	python scripts/audit_consistency.py

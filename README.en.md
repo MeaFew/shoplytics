@@ -23,7 +23,7 @@
 ## Highlights
 
 - **Scale**: Cleans and engineers 29M rows in **~0.4s** on a single machine (Polars vectorized execution)
-- **Engineering**: dbt data model layering (staging → intermediate → marts) + 7 data quality tests + GitHub Actions triple-gate (lint / sql-lint / docker-build)
+- **Engineering**: dbt data model layering (staging → intermediate → marts) + 10+ data quality tests + GitHub Actions quad-gate (lint / sql-lint / test / docker-build)
 - **End-to-end Methodology**: Covers the full user lifecycle — retention, conversion funnel, RFM segmentation, A/B testing, churn prediction, collaborative filtering recommendation
 - **Production Mindset**: Every module includes a "Limitations → Production Path" analysis, not just toy examples
 
@@ -34,7 +34,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Source** | Alibaba Tianchi — "Taobao User Behavior" Open Dataset |
-| **Scale** | 287,004 users · 2,584,623 items · **29,128,402 records** |
+| **Scale** | 287,004 users · 2,584,623 items · 5,132 categories · **29,128,402 records** |
 | **Time Window** | Timestamps span 84 days (2017-04 ~ 2018-01); **99.96% of data concentrates in 2017-11-24 ~ 2017-12-03 (10 days)** |
 | **Behaviors** | `pv` (page view) · `buy` · `cart` · `fav` |
 
@@ -83,7 +83,7 @@ make verify
 
 | Metric | Value | Business Insight |
 |--------|-------|------------------|
-| Avg. DAU | 205,091 | Stable active user base during the 9-day core window |
+| Avg. DAU | 205,091 | Stable active user base during the 10-day core window |
 | PV → Purchase Conversion | **2.24%** | Typical e-commerce level; optimization opportunity lies in homepage recommendation accuracy |
 | PV → Cart Conversion | 6.21% | Product detail page design effectively drives add-to-cart behavior |
 | Cart → Purchase Conversion | **36.04%** | Cart recovery (SMS / push) is a high-ROI optimization lever |
@@ -137,7 +137,7 @@ make verify
 | 7 | **Anomaly Detection** | 3σ rule + moving average | Automated daily reports + anomaly behavior alerts |
 | 8 | **Cohort & LTV** | Cohort retention heatmap · behavior-weighted value estimation | User cohort lifecycle value tracking |
 | 9 | **Dashboard** | Streamlit + Plotly · KPI cards · funnel · RFM | Self-service analytics tool for product / ops teams |
-| 10 | **Data Engineering** | dbt model layering · 7 data quality tests | Version-controlled analytics data pipeline |
+| 10 | **Data Engineering** | dbt model layering · 10+ data quality tests | Version-controlled analytics data pipeline |
 
 ---
 

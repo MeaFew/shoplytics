@@ -25,7 +25,7 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, count, countDistinct, sum as spark_sum, avg,
-    round, lit, when, row_number, rank
+    round, lit, when
 )
 from pyspark.sql.window import Window
 
