@@ -48,7 +48,10 @@ def main():
         total_rows = sum(1 for _ in open(CLEANED_CSV_PATH, encoding="utf-8")) - 1
 
         ok = check(total_rows == 29_128_402, f"Total records: actual={total_rows}, expected=29,128,402")
-        if ok: passed += 1 else: failed += 1
+        if ok:
+            passed += 1
+        else:
+            failed += 1
         print(f"  Users: {n_users}, Items: {n_items}, Categories: {n_cats}")
     else:
         print(f"  SKIP: {CLEANED_CSV_PATH} not found — run preprocess first")
@@ -61,7 +64,10 @@ def main():
         metrics = summary.get("key_metrics", {})
         xgb_auc = metrics.get("xgb_auc", 0)
         ok = check(xgb_auc > 0.80, f"XGBoost AUC={xgb_auc:.4f} (threshold: 0.80)")
-        if ok: passed += 1 else: failed += 1
+        if ok:
+            passed += 1
+        else:
+            failed += 1
         print(f"  LR AUC={metrics.get('lr_auc', 0):.4f}")
     else:
         print(f"  SKIP: {summary_path} not found — run pipeline first")
