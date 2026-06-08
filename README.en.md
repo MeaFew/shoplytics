@@ -62,8 +62,13 @@
 git clone https://github.com/MeaFew/ecommerce-user-analytics.git
 cd ecommerce-user-analytics
 
-# Install dependencies and run the full pipeline
-make setup
+# Download dataset (GitHub Releases, ~264MB)
+bash download_data.sh
+
+# Verify environment (lint + test + format-check + audit)
+make verify
+
+# Run full analysis pipeline
 make all
 
 # Launch the interactive dashboard
@@ -254,6 +259,14 @@ docker compose -f docker-compose.superset.yml up -d
 - [`sql/README.md`](sql/README.md) — SQL analysis module guide and database compatibility reference
 
 ---
+
+## Related Projects
+
+| Project | Repo | Description |
+|---------|------|-------------|
+| Marketing Attribution & MMM | [MeaFew/marketing-attribution-mmm](https://github.com/MeaFew/marketing-attribution-mmm) | MMM + multi-touch attribution + budget optimization |
+| Credit Risk Scoring | [MeaFew/credit-risk-scoring](https://github.com/MeaFew/credit-risk-scoring) | WOE/IV + XGBoost/LightGBM + SHAP interpretability |
+| Multivariate Time Series | [MeaFew/multivariate-timeseries-forecasting](https://github.com/MeaFew/multivariate-timeseries-forecasting) | LSTM / Transformer / XGBoost forecasting benchmarks |
 
 ## License
 

@@ -253,6 +253,14 @@ docker compose -f docker-compose.superset.yml up -d
 
 ---
 
+## 相关项目
+
+| 项目 | 仓库 | 简介 |
+|------|------|------|
+| 营销归因与预算优化 | [MeaFew/marketing-attribution-mmm](https://github.com/MeaFew/marketing-attribution-mmm) | MMM + 多触点归因 + 预算优化 |
+| 信用风险评分 | [MeaFew/credit-risk-scoring](https://github.com/MeaFew/credit-risk-scoring) | WOE/IV + XGBoost/LightGBM + SHAP 可解释性 |
+| 多元时序预测 | [MeaFew/multivariate-timeseries-forecasting](https://github.com/MeaFew/multivariate-timeseries-forecasting) | LSTM / Transformer / XGBoost 时序预测对比 |
+
 ## 许可证
 
 数据集遵循阿里云天池的使用条款。代码采用 MIT License，仅供学习交流使用。
