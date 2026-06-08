@@ -62,19 +62,17 @@
 git clone https://github.com/MeaFew/ecommerce-user-analytics.git
 cd ecommerce-user-analytics
 
-# 安装依赖并运行完整管线
-make setup
+# 下载数据集（GitHub Releases，约 264MB）
+bash download_data.sh
+
+# 验证环境（lint + test + format-check + audit）
+make verify
+
+# 运行完整分析管线
 make all
 
 # 启动交互式看板
 make dashboard
-
-# 启动 Apache Superset BI 看板（需 Docker）
-docker compose -f docker-compose.superset.yml up -d
-# 访问 http://localhost:8088，用户名 admin / 密码 admin
-
-# 本地质量门（与 CI 完全对齐）
-make verify
 ```
 
 ---
