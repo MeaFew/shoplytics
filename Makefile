@@ -33,10 +33,11 @@ dashboard:
 test:
 	pytest tests/ -v
 
-verify: format-check test audit
-	ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/ --ignore E501,F401,E402
+lint:
+	ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/ --ignore E501,E402
 	sqlfluff lint sql/
-	pytest tests/ -v
+
+verify: lint format-check test audit
 	python scripts/validate_data.py
 
 # Full workflow (local equivalent of a production DAG)
