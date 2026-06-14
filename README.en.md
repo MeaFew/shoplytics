@@ -180,7 +180,11 @@ make verify
 ecommerce-user-analytics/
 ├── scripts/                      # Python utility scripts
 │   ├── preprocess.py             #   Polars ETL (~0.4s / 29M rows)
-│   ├── pipeline.py               #   Full analysis pipeline orchestration
+│   ├── pipeline.py               #   Pipeline orchestrator (load → dispatch modules → summarize)
+│   ├── eda.py                    #   EDA visualization (behavior / DAU / activity heatmap)
+│   ├── churn_prediction.py       #   Churn prediction (LR + XGBoost + ROC / importance plots)
+│   ├── ab_testing.py             #   A/B test (hash grouping + Z-test + SRM check)
+│   ├── recommendation.py         #   CF recommendation + cohort retention + LTV estimation
 │   ├── run_sql.py                #   DuckDB SQL batch execution
 │   ├── validate_data.py          #   Data quality validation
 │   └── benchmark_preprocessing.py #  Polars vs Pandas performance benchmark

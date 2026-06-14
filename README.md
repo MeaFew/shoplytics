@@ -173,7 +173,11 @@ make dashboard
 ecommerce-user-analytics/
 ├── scripts/                      # Python 工具脚本
 │   ├── preprocess.py             #   Polars ETL（~0.4s / 29M rows）
-│   ├── pipeline.py               #   完整分析管线编排
+│   ├── pipeline.py               #   管线编排入口（加载数据 → 调度各模块 → 汇总）
+│   ├── eda.py                    #   EDA 可视化（行为分布/DAU/活跃热力图）
+│   ├── churn_prediction.py       #   流失预测（LR + XGBoost + ROC/重要性图）
+│   ├── ab_testing.py             #   A/B 测试（哈希分组 + Z 检验 + SRM 校验）
+│   ├── recommendation.py         #   协同过滤推荐 + Cohort 留存 + LTV 估算
 │   ├── run_sql.py                #   DuckDB SQL 批量执行
 │   ├── validate_data.py          #   数据质量校验
 │   └── benchmark_preprocessing.py #  Polars vs Pandas 性能基准
