@@ -22,6 +22,7 @@ def test_validate_data_passes_on_cleaned_data():
     if not CLEANED_CSV_PATH.exists():
         # 如果本地没有清洗数据, 跳过该测试
         import pytest
+
         pytest.skip(f"Cleaned data not found at {CLEANED_CSV_PATH}")
 
     errors = validate(CLEANED_CSV_PATH)
@@ -41,7 +42,7 @@ def test_validate_detects_missing_columns(tmp_path):
 def test_validate_detects_unknown_behavior(tmp_path):
     """未知行为类型时应报错."""
     csv_path = tmp_path / "bad_behavior.csv"
-    data = {col: [] for col in EXPECTED_COLUMNS.keys()}
+    data = {col: [] for col in EXPECTED_COLUMNS}
     # 手动填充最小数据以通过空值检查
     data["user_id"] = [1]
     data["item_id"] = [1]

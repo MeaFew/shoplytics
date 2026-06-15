@@ -11,38 +11,51 @@ from datetime import datetime
 from pathlib import Path
 
 import sys
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import RAW_CSV_PATH, PROCESSED_DATA_DIR, DUCKDB_PATH
 
 # --- Prefect imports (install: pip install prefect) ---
 try:
     from prefect import flow, task
+
     HAS_PREFECT = True
 except ImportError:
     HAS_PREFECT = False
+
     # Define no-op decorators so the file is still importable
     def flow(*args, **kwargs):
         def wrapper(fn):
             return fn
+
         return wrapper
+
     def task(*args, **kwargs):
         def wrapper(fn):
             return fn
+
         return wrapper
 
 
 @task(name="preprocess-data", retries=1, tags=["etl"])
-def preprocess_data(input_path: str | None = None,
-                    output_dir: str | None = None):
+def preprocess_data(input_path: str | None = None, output_dir: str | None = None):
     """Step 1: Clean and preprocess raw user behavior data."""
     inp = input_path or str(RAW_CSV_PATH)
     out = output_dir or str(PROCESSED_DATA_DIR)
     import subprocess
-    result = subprocess.run([
-        "python", "scripts/preprocess.py",
-        "--input", inp,
-        "--output-dir", out,
-    ], capture_output=True, text=True)
+
+    result = subprocess.run(
+        [
+            "python",
+            "scripts/preprocess.py",
+            "--input",
+            inp,
+            "--output-dir",
+            out,
+        ],
+        capture_output=True,
+        text=True,
+    )
     print(result.stdout[-500:])
     if result.returncode != 0:
         raise RuntimeError(result.stderr)
@@ -54,6 +67,7 @@ def run_sql_analysis(db_path: str | None = None):
     """Step 2: Execute SQL analysis scripts on the preprocessed data."""
     db = db_path or str(DUCKDB_PATH)
     import duckdb
+
     con = duckdb.connect(db)
     sql_dir = Path("sql")
     scripts = sorted(sql_dir.glob("0*.sql"))
@@ -62,7 +76,11 @@ def run_sql_analysis(db_path: str | None = None):
         sql = script.read_text(encoding="utf-8")
         statements = [s.strip() for s in sql.split(";") if s.strip()]
         for stmt in statements:
-            lines = [ln for ln in stmt.splitlines() if ln.strip() and not ln.strip().startswith("--")]
+            lines = [
+                ln
+                for ln in stmt.splitlines()
+                if ln.strip() and not ln.strip().startswith("--")
+            ]
             if not lines:
                 continue
             con.execute(stmt)
@@ -74,6 +92,7 @@ def run_sql_analysis(db_path: str | None = None):
 def run_dbt_models():
     """Step 3: Run dbt models and tests."""
     import subprocess
+
     result = subprocess.run(["dbt", "run"], cwd="dbt", capture_output=True, text=True)
     print(result.stdout[-500:])
     result = subprocess.run(["dbt", "test"], cwd="dbt", capture_output=True, text=True)
@@ -85,9 +104,9 @@ def run_dbt_models():
 def run_modeling_pipeline():
     """Step 4: Run Python analysis pipeline (EDA, churn, A/B, cohort, LTV)."""
     import subprocess
+
     result = subprocess.run(
-        ["python", "scripts/pipeline.py"],
-        capture_output=True, text=True
+        ["python", "scripts/pipeline.py"], capture_output=True, text=True
     )
     print(result.stdout[-800:])
     if result.returncode != 0:
@@ -95,9 +114,11 @@ def run_modeling_pipeline():
     return "Modeling pipeline complete — charts generated in images/"
 
 
-@flow(name="ecommerce-analytics-pipeline",
-      description="Daily ETL + analytics pipeline for user behavior data",
-      log_prints=True)
+@flow(
+    name="ecommerce-analytics-pipeline",
+    description="Daily ETL + analytics pipeline for user behavior data",
+    log_prints=True,
+)
 def analytics_pipeline():
     """
     Production-equivalent pipeline.

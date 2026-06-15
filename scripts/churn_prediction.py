@@ -61,24 +61,48 @@ def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
     """Build user-level features (reusable across stages)."""
     dataset_max_date = df.select(pl.col("date").max()).item()
 
-    user_stats = df.group_by("user_id").agg(
-        [
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "pv").count().alias("total_pv"),
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "buy").count().alias("total_buy"),
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "cart").count().alias("total_cart"),
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "fav").count().alias("total_fav"),
-            pl.col("date").n_unique().alias("active_days"),
-            pl.col("hour").n_unique().alias("active_hours"),
-            pl.col("date").max().alias("last_date"),
-            pl.col("is_weekend").mean().alias("weekend_ratio"),
-        ]
-    ).with_columns(
-        [
-            ((dataset_max_date - pl.col("last_date")).dt.total_days()).alias("recency_days"),
-            (pl.col("total_buy") / (pl.col("total_pv") + 0.001)).alias("buy_conversion"),
-            (pl.col("total_cart") / (pl.col("total_pv") + 0.001)).alias("cart_conversion"),
-            (pl.col("total_fav") / (pl.col("total_pv") + 0.001)).alias("fav_conversion"),
-        ]
+    user_stats = (
+        df.group_by("user_id")
+        .agg(
+            [
+                pl.col("behavior_type")
+                .filter(pl.col("behavior_type") == "pv")
+                .count()
+                .alias("total_pv"),
+                pl.col("behavior_type")
+                .filter(pl.col("behavior_type") == "buy")
+                .count()
+                .alias("total_buy"),
+                pl.col("behavior_type")
+                .filter(pl.col("behavior_type") == "cart")
+                .count()
+                .alias("total_cart"),
+                pl.col("behavior_type")
+                .filter(pl.col("behavior_type") == "fav")
+                .count()
+                .alias("total_fav"),
+                pl.col("date").n_unique().alias("active_days"),
+                pl.col("hour").n_unique().alias("active_hours"),
+                pl.col("date").max().alias("last_date"),
+                pl.col("is_weekend").mean().alias("weekend_ratio"),
+            ]
+        )
+        .with_columns(
+            [
+                ((dataset_max_date - pl.col("last_date")).dt.total_days()).alias(
+                    "recency_days"
+                ),
+                (pl.col("total_buy") / (pl.col("total_pv") + 0.001)).alias(
+                    "buy_conversion"
+                ),
+                (pl.col("total_cart") / (pl.col("total_pv") + 0.001)).alias(
+                    "cart_conversion"
+                ),
+                (pl.col("total_fav") / (pl.col("total_pv") + 0.001)).alias(
+                    "fav_conversion"
+                ),
+            ]
+        )
     )
 
     user_stats = user_stats.with_columns(
@@ -163,7 +187,9 @@ def run_churn_prediction(df: pl.DataFrame) -> dict:
     fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
     fpr_xgb, tpr_xgb, _ = roc_curve(y_test, y_prob_xgb)
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(fpr_lr, tpr_lr, label=f"Logistic Regression (AUC={lr_auc:.4f})", linewidth=2)
+    ax.plot(
+        fpr_lr, tpr_lr, label=f"Logistic Regression (AUC={lr_auc:.4f})", linewidth=2
+    )
     ax.plot(fpr_xgb, tpr_xgb, label=f"XGBoost (AUC={xgb_auc:.4f})", linewidth=2)
     ax.plot([0, 1], [0, 1], "k--", label="Random")
     ax.set_xlabel("False Positive Rate")

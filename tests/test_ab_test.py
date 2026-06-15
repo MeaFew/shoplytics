@@ -49,8 +49,9 @@ def test_srm_check_balanced():
     n_treatment = 5000
     total = n_control + n_treatment
     expected_ratio = 0.5
-    chi2 = ((n_treatment - total * expected_ratio) ** 2) / (total * expected_ratio) + \
-           ((n_control - total * expected_ratio) ** 2) / (total * (1 - expected_ratio))
+    chi2 = ((n_treatment - total * expected_ratio) ** 2) / (total * expected_ratio) + (
+        (n_control - total * expected_ratio) ** 2
+    ) / (total * (1 - expected_ratio))
     p_value = 1 - stats.chi2.cdf(chi2, df=1)
     assert p_value > 0.01, "Balanced split should pass SRM check"
 
@@ -61,7 +62,8 @@ def test_srm_check_imbalanced():
     n_treatment = 4000
     total = n_control + n_treatment
     expected_ratio = 0.5
-    chi2 = ((n_treatment - total * expected_ratio) ** 2) / (total * expected_ratio) + \
-           ((n_control - total * expected_ratio) ** 2) / (total * (1 - expected_ratio))
+    chi2 = ((n_treatment - total * expected_ratio) ** 2) / (total * expected_ratio) + (
+        (n_control - total * expected_ratio) ** 2
+    ) / (total * (1 - expected_ratio))
     p_value = 1 - stats.chi2.cdf(chi2, df=1)
     assert p_value < 0.01, "Severely imbalanced split should fail SRM check"

@@ -79,7 +79,8 @@ def main() -> None:
 
     summary = {
         "generated_charts": [
-            f"images/{c}" for c in (
+            f"images/{c}"
+            for c in (
                 eda_result["charts"]
                 + churn_result["charts"]
                 + ab_result["charts"]
@@ -94,7 +95,9 @@ def main() -> None:
             "ab_test_significant": ab_result["significant"],
             "srm_p_value": round(ab_result["srm_pvalue"], 4),
             "usercf_precision_at_10": round(rec_result["precision_at_k"], 4),
-            "top_20_ltv_contribution_pct": round(ltv_result["top_20_contribution_pct"], 1),
+            "top_20_ltv_contribution_pct": round(
+                ltv_result["top_20_contribution_pct"], 1
+            ),
         },
     }
 

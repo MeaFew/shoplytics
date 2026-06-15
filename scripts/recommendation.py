@@ -173,10 +173,22 @@ def run_ltv(df: pl.DataFrame) -> dict:
     """LTV tier contribution (5-tier quantile split)."""
     lv = df.group_by("user_id").agg(
         [
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "pv").count().alias("pv"),
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "fav").count().alias("fav"),
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "cart").count().alias("cart"),
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "buy").count().alias("buy"),
+            pl.col("behavior_type")
+            .filter(pl.col("behavior_type") == "pv")
+            .count()
+            .alias("pv"),
+            pl.col("behavior_type")
+            .filter(pl.col("behavior_type") == "fav")
+            .count()
+            .alias("fav"),
+            pl.col("behavior_type")
+            .filter(pl.col("behavior_type") == "cart")
+            .count()
+            .alias("cart"),
+            pl.col("behavior_type")
+            .filter(pl.col("behavior_type") == "buy")
+            .count()
+            .alias("buy"),
         ]
     )
     lv = lv.with_columns(
@@ -189,13 +201,21 @@ def run_ltv(df: pl.DataFrame) -> dict:
     )
     lv = lv.with_columns((pl.col("value_score") * 3).alias("ltv_estimate"))
 
-    lv_pd = lv.filter(pl.col("ltv_estimate") > 0).sort("ltv_estimate", descending=True).to_pandas()
+    lv_pd = (
+        lv.filter(pl.col("ltv_estimate") > 0)
+        .sort("ltv_estimate", descending=True)
+        .to_pandas()
+    )
     lv_pd["tier"] = pd.qcut(
         lv_pd["ltv_estimate"],
         q=5,
         labels=["Bottom 20%", "20-40%", "40-60%", "60-80%", "Top 20%"],
     )
-    tier_contrib = lv_pd.groupby("tier", observed=True)["ltv_estimate"].sum() / lv_pd["ltv_estimate"].sum() * 100
+    tier_contrib = (
+        lv_pd.groupby("tier", observed=True)["ltv_estimate"].sum()
+        / lv_pd["ltv_estimate"].sum()
+        * 100
+    )
 
     fig, ax = plt.subplots(figsize=(8, 5))
     colors_lv = ["#C73E1D", "#F18F01", "#A23B72", "#2E86AB", "#00b894"]

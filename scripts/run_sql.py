@@ -41,16 +41,16 @@ def split_sql_statements(content: str) -> list[str]:
         c = content[i]
 
         # 行注释 -- ...
-        if c == '-' and i + 1 < length and content[i + 1] == '-':
+        if c == "-" and i + 1 < length and content[i + 1] == "-":
             i += 2
-            while i < length and content[i] != '\n':
+            while i < length and content[i] != "\n":
                 i += 1
             continue
 
         # 块注释 /* ... */
-        if c == '/' and i + 1 < length and content[i + 1] == '*':
+        if c == "/" and i + 1 < length and content[i + 1] == "*":
             i += 2
-            while i + 1 < length and not (content[i] == '*' and content[i + 1] == '/'):
+            while i + 1 < length and not (content[i] == "*" and content[i + 1] == "/"):
                 i += 1
             i += 2  # skip */
             continue
@@ -82,7 +82,7 @@ def split_sql_statements(content: str) -> list[str]:
             continue
 
         # 分号分隔
-        if c == ';':
+        if c == ";":
             stmt = content[start:i].strip()
             if stmt:
                 statements.append(stmt)
@@ -119,7 +119,11 @@ def run_sql_scripts(db_path: Path) -> None:
         statements = split_sql_statements(sql)
         for stmt in statements:
             # 跳过以 -- 开头的注释块
-            lines = [ln for ln in stmt.splitlines() if ln.strip() and not ln.strip().startswith("--")]
+            lines = [
+                ln
+                for ln in stmt.splitlines()
+                if ln.strip() and not ln.strip().startswith("--")
+            ]
             if not lines:
                 continue
             try:
@@ -136,7 +140,9 @@ def run_sql_scripts(db_path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="批量执行 SQL 脚本到 DuckDB")
-    parser.add_argument("--db", type=Path, default=DUCKDB_PATH, help="DuckDB 数据库路径")
+    parser.add_argument(
+        "--db", type=Path, default=DUCKDB_PATH, help="DuckDB 数据库路径"
+    )
     args = parser.parse_args()
     run_sql_scripts(args.db)
 

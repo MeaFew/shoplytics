@@ -25,7 +25,14 @@ import sys
 from pathlib import Path
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, count, sum as spark_sum, lit, when, monotonically_increasing_id
+from pyspark.sql.functions import (
+    col,
+    count,
+    sum as spark_sum,
+    lit,
+    when,
+    monotonically_increasing_id,
+)
 from pyspark.ml.recommendation import ALS
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.feature import StringIndexer
@@ -44,21 +51,21 @@ INPUT_PATH = str(SPARK_INPUT_PATH)
 OUTPUT_PATH = os.path.join(str(SPARK_OUTPUT_DIR), "recommendation")
 
 # 推荐参数
-TOP_N = 10              # 为每个用户推荐 Top-N 物品
-RANK = 10               # 隐因子维度
-MAX_ITER = 10           # 迭代次数
-REG_PARAM = 0.1         # 正则化参数
-ALPHA = 40.0            # 隐式反馈置信度缩放因子
-TRAIN_RATIO = 0.8       # 训练集比例
+TOP_N = 10  # 为每个用户推荐 Top-N 物品
+RANK = 10  # 隐因子维度
+MAX_ITER = 10  # 迭代次数
+REG_PARAM = 0.1  # 正则化参数
+ALPHA = 40.0  # 隐式反馈置信度缩放因子
+TRAIN_RATIO = 0.8  # 训练集比例
 
 # ---------------------------------------------------------------------------
+
 
 def main():
     # 1. 初始化 SparkSession
     # ---------------------------------------------------------------------------
     spark = (
-        SparkSession.builder
-        .appName("Ecommerce-ALS-Recommendation")
+        SparkSession.builder.appName("Ecommerce-ALS-Recommendation")
         .master("local[*]")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
@@ -96,17 +103,16 @@ def main():
     # 该评分反映用户对物品的兴趣强度，buy 权重最高
 
     df_rating = (
-        df
-        .withColumn(
+        df.withColumn(
             "rating",
             when(col("behavior_type") == "pv", lit(1))
             .when(col("behavior_type") == "fav", lit(2))
             .when(col("behavior_type") == "cart", lit(3))
             .when(col("behavior_type") == "buy", lit(5))
-            .otherwise(lit(1))
+            .otherwise(lit(1)),
         )
         .groupBy("user_id", "item_id")
-        .agg(spark_sum("rating").alias("rating"))   # 同一用户对同一物品的多次行为累加
+        .agg(spark_sum("rating").alias("rating"))  # 同一用户对同一物品的多次行为累加
         .filter(col("rating") > 0)
     )
 
@@ -124,8 +130,12 @@ def main():
     df_rating = df_rating.withColumn("user_id_str", col("user_id").cast("string"))
     df_rating = df_rating.withColumn("item_id_str", col("item_id").cast("string"))
 
-    user_indexer = StringIndexer(inputCol="user_id_str", outputCol="user_idx", handleInvalid="keep")
-    item_indexer = StringIndexer(inputCol="item_id_str", outputCol="item_idx", handleInvalid="keep")
+    user_indexer = StringIndexer(
+        inputCol="user_id_str", outputCol="user_idx", handleInvalid="keep"
+    )
+    item_indexer = StringIndexer(
+        inputCol="item_id_str", outputCol="item_idx", handleInvalid="keep"
+    )
 
     user_indexer_model = user_indexer.fit(df_rating)
     df_rating = user_indexer_model.transform(df_rating)
@@ -162,14 +172,14 @@ def main():
         .setUserCol("user_idx")
         .setItemCol("item_idx")
         .setRatingCol("rating")
-        .setRank(RANK)                 # 隐因子维度
-        .setMaxIter(MAX_ITER)           # 最大迭代次数
-        .setRegParam(REG_PARAM)         # 正则化参数
-        .setAlpha(ALPHA)                # 隐式反馈置信度参数
-        .setImplicitPrefs(True)         # 启用隐式反馈模式
-        .setColdStartStrategy("drop")   # 冷启动时丢弃，避免 NaN 预测值
-        .setNonnegative(True)           # 非负矩阵分解，增强可解释性
-        .setCheckpointInterval(2)       # 每 2 次迭代 checkpoint，防止 DAG 过长
+        .setRank(RANK)  # 隐因子维度
+        .setMaxIter(MAX_ITER)  # 最大迭代次数
+        .setRegParam(REG_PARAM)  # 正则化参数
+        .setAlpha(ALPHA)  # 隐式反馈置信度参数
+        .setImplicitPrefs(True)  # 启用隐式反馈模式
+        .setColdStartStrategy("drop")  # 冷启动时丢弃，避免 NaN 预测值
+        .setNonnegative(True)  # 非负矩阵分解，增强可解释性
+        .setCheckpointInterval(2)  # 每 2 次迭代 checkpoint，防止 DAG 过长
     )
 
     model = als.fit(train_df)
@@ -184,9 +194,7 @@ def main():
     predictions = model.transform(test_df).na.drop()  # 过滤掉冷启动产生的 NaN
 
     evaluator = RegressionEvaluator(
-        metricName="rmse",
-        labelCol="rating",
-        predictionCol="prediction"
+        metricName="rmse", labelCol="rating", predictionCol="prediction"
     )
 
     rmse = evaluator.evaluate(predictions)
@@ -194,9 +202,7 @@ def main():
 
     # 同时计算 MAE
     evaluator_mae = RegressionEvaluator(
-        metricName="mae",
-        labelCol="rating",
-        predictionCol="prediction"
+        metricName="mae", labelCol="rating", predictionCol="prediction"
     )
     mae = evaluator_mae.evaluate(predictions)
     print(f"[INFO] 测试集 MAE: {mae:.4f}")
@@ -216,12 +222,11 @@ def main():
     from pyspark.sql.functions import explode, struct
 
     user_recs_exploded = (
-        user_recs
-        .withColumn("rec", explode(col("recommendations")))
+        user_recs.withColumn("rec", explode(col("recommendations")))
         .select(
             col("user_id"),
             col("rec.item_idx").alias("item_idx"),
-            col("rec.rating").alias("predicted_rating")
+            col("rec.rating").alias("predicted_rating"),
         )
         .join(item_id_map, on="item_idx", how="inner")
         .select("user_id", "item_id", "predicted_rating")
@@ -236,7 +241,9 @@ def main():
     if sample_user:
         sample_user_id = sample_user[0]["user_id"]
         print(f"[INFO] 用户 {sample_user_id} 的 Top-{TOP_N} 推荐:")
-        user_recs_exploded.filter(col("user_id") == sample_user_id).show(TOP_N, truncate=False)
+        user_recs_exploded.filter(col("user_id") == sample_user_id).show(
+            TOP_N, truncate=False
+        )
 
     # ---------------------------------------------------------------------------
     # 9. 物品相似度分析（可选）：获取每个物品的最相似物品
@@ -245,15 +252,19 @@ def main():
 
     item_recs = model.recommendForAllItems(TOP_N)
     item_recs_exploded = (
-        item_recs
-        .withColumn("rec", explode(col("recommendations")))
+        item_recs.withColumn("rec", explode(col("recommendations")))
         .select(
             col("item_idx"),
             col("rec.user_idx").alias("similar_item_idx"),
-            col("rec.rating").alias("similarity_score")
+            col("rec.rating").alias("similarity_score"),
         )
-        .join(item_id_map.withColumnRenamed("item_id", "similar_item_id").withColumnRenamed("item_idx", "similar_item_idx"),
-              on="similar_item_idx", how="inner")
+        .join(
+            item_id_map.withColumnRenamed(
+                "item_id", "similar_item_id"
+            ).withColumnRenamed("item_idx", "similar_item_idx"),
+            on="similar_item_idx",
+            how="inner",
+        )
         .join(item_id_map, on="item_idx", how="inner")
         .select("item_id", "similar_item_id", "similarity_score")
         .orderBy("item_id", col("similarity_score").desc())
@@ -281,7 +292,9 @@ def main():
     )
 
     # 10.3 模型评估指标（保存为文本）
-    with open(os.path.join(OUTPUT_PATH, "model_metrics.txt"), "w", encoding="utf-8") as f:
+    with open(
+        os.path.join(OUTPUT_PATH, "model_metrics.txt"), "w", encoding="utf-8"
+    ) as f:
         f.write("ALS Model Metrics\n")
         f.write("=================\n")
         f.write(f"Rank: {RANK}\n")
