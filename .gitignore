@@ -1,40 +1,105 @@
 # Python
-.venv/
 __pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-dist/
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Data files (too large for GitHub)
-data/raw/
-data/processed/
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# WorkBuddy
-.workbuddy/
-
-# Environment & Secrets
-.env
-*.env
-!*.env.example
-
-# Jupyter
-.ipynb_checkpoints/
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Large files
+# Jupyter
+.ipynb_checkpoints/
+.python-version
+
+# Data (large files — tracked via Git LFS if needed)
+data/raw/
+data/processed/
+data/external/
+*.csv
+*.tsv
+*.tsv.gz
+*.parquet
+*.db
+*.duckdb
 *.zip
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+# Models / outputs
+models/
 *.pkl
 *.joblib
+*.pt
+*.pth
+*.ckpt
+reports/*.json
+reports/*.md
+reports/*.html
+reports/checkpoints/
+images/*.png
+images/*.jpg
+!models/.gitkeep
+!reports/.gitkeep
+!images/.gitkeep
+
+# Logs
+*.log
+lightning_logs/
+wandb/
+
+# Test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# WorkBuddy
+.workbuddy/
+
+# Skills (if generated locally)
 skills/
-ecommerce-user-analytics/data.zip

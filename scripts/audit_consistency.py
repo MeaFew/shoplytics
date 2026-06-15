@@ -31,23 +31,28 @@ def check(condition: bool, msg: str) -> bool:
 
 def main():
     root = Path(__file__).resolve().parents[1]
-    readme = root / "README.md"
     passed = 0
     failed = 0
 
     # --- Data scale checks ---
     from config import CLEANED_CSV_PATH
+
     if CLEANED_CSV_PATH.exists():
         import polars as pl
+
         df = pl.read_csv(CLEANED_CSV_PATH, n_rows=1)
         n_users = df.select(pl.col("user_id").n_unique()).item()
         n_items = df.select(pl.col("item_id").n_unique()).item()
         n_cats = df.select(pl.col("category_id").n_unique()).item()
 
         # Read full row count from file size
-        total_rows = sum(1 for _ in open(CLEANED_CSV_PATH, encoding="utf-8")) - 1
+        with open(CLEANED_CSV_PATH, encoding="utf-8") as f:
+            total_rows = sum(1 for _ in f) - 1
 
-        ok = check(total_rows == 29_128_402, f"Total records: actual={total_rows}, expected=29,128,402")
+        ok = check(
+            total_rows == 29_128_402,
+            f"Total records: actual={total_rows}, expected=29,128,402",
+        )
         if ok:
             passed += 1
         else:
@@ -78,7 +83,7 @@ def main():
         print("No checks performed (data not found). Run make all first.")
         return
 
-    print(f"\n{'='*40}")
+    print(f"\n{'=' * 40}")
     print(f"Results: {passed}/{total} passed, {failed} failed")
     if failed > 0:
         print("ACTION: Update README.md or fix pipeline to resolve mismatches.")

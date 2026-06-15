@@ -34,16 +34,28 @@ def hash_group(user_id: int, salt: str = "ab_test_v1") -> str:
 def run_ab_test(df: pl.DataFrame, split_date: str = "2017-12-01") -> dict:
     """Run A/B test on post-split-date users. Returns metrics + chart filename."""
     df_sample = df.filter(pl.col("date") >= pl.date(*map(int, split_date.split("-"))))
-    user_conv = df_sample.group_by("user_id").agg(
-        [
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "pv").count().alias("pv"),
-            pl.col("behavior_type").filter(pl.col("behavior_type") == "buy").count().alias("buy"),
-        ]
-    ).with_columns(
-        [
-            pl.col("user_id").map_elements(hash_group, return_dtype=pl.Utf8).alias("group"),
-            (pl.col("buy") > 0).cast(pl.Int64).alias("converted"),
-        ]
+    user_conv = (
+        df_sample.group_by("user_id")
+        .agg(
+            [
+                pl.col("behavior_type")
+                .filter(pl.col("behavior_type") == "pv")
+                .count()
+                .alias("pv"),
+                pl.col("behavior_type")
+                .filter(pl.col("behavior_type") == "buy")
+                .count()
+                .alias("buy"),
+            ]
+        )
+        .with_columns(
+            [
+                pl.col("user_id")
+                .map_elements(hash_group, return_dtype=pl.Utf8)
+                .alias("group"),
+                (pl.col("buy") > 0).cast(pl.Int64).alias("converted"),
+            ]
+        )
     )
 
     control = user_conv.filter(pl.col("group") == "control")
@@ -52,15 +64,16 @@ def run_ab_test(df: pl.DataFrame, split_date: str = "2017-12-01") -> dict:
     c_rate = control["converted"].mean()
     t_rate = treatment["converted"].mean()
     logger.info("Control:   %s users, conv=%.2f%%", f"{control.height:,}", c_rate * 100)
-    logger.info("Treatment: %s users, conv=%.2f%%", f"{treatment.height:,}", t_rate * 100)
+    logger.info(
+        "Treatment: %s users, conv=%.2f%%", f"{treatment.height:,}", t_rate * 100
+    )
 
     # SRM check
     total = control.height + treatment.height
     expected_ratio = 0.5
-    srm_chi2 = (
-        ((control.height - total * expected_ratio) ** 2) / (total * expected_ratio)
-        + ((treatment.height - total * expected_ratio) ** 2) / (total * expected_ratio)
-    )
+    srm_chi2 = ((control.height - total * expected_ratio) ** 2) / (
+        total * expected_ratio
+    ) + ((treatment.height - total * expected_ratio) ** 2) / (total * expected_ratio)
     srm_pvalue = 1 - stats.chi2.cdf(srm_chi2, df=1)
     logger.info(
         "SRM check: χ²=%.4f, p=%.4f (p<0.05 表示分组不均衡)", srm_chi2, srm_pvalue
@@ -84,7 +97,11 @@ def run_ab_test(df: pl.DataFrame, split_date: str = "2017-12-01") -> dict:
 
     significant = bool(p_value < 0.05)
     fig, ax = plt.subplots(figsize=(6, 5))
-    ax.bar(["Control", "Treatment"], [c_rate * 100, t_rate * 100], color=["#2E86AB", "#F18F01"])
+    ax.bar(
+        ["Control", "Treatment"],
+        [c_rate * 100, t_rate * 100],
+        color=["#2E86AB", "#F18F01"],
+    )
     ax.set_ylabel("Conversion Rate (%)")
     ax.set_title(
         f"A/B Test: p={p_value:.4f}, {'Significant' if significant else 'Not Significant'}",

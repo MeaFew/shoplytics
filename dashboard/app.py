@@ -44,8 +44,16 @@ st.set_page_config(
 )
 
 WARM_COLORS = [
-    "#D4A373", "#E07A5F", "#F4A261", "#E9C46A", "#C38D9E",
-    "#E8A87C", "#F2CC8F", "#BC6C25", "#A44A4A", "#DDA15E",
+    "#D4A373",
+    "#E07A5F",
+    "#F4A261",
+    "#E9C46A",
+    "#C38D9E",
+    "#E8A87C",
+    "#F2CC8F",
+    "#BC6C25",
+    "#A44A4A",
+    "#DDA15E",
 ]
 
 COLOR_MAP = {
@@ -54,6 +62,7 @@ COLOR_MAP = {
     "cart": "#F4A261",
     "buy": "#A44A4A",
 }
+
 
 # ---------------------------------------------------------------------------
 # 数据加载（优先 Parquet）
@@ -113,10 +122,7 @@ def compute_kpis(df: pl.DataFrame) -> tuple:
     total_users = df["user_id"].n_unique()
 
     # 一次性统计所有行为数量
-    behavior_counts = (
-        df.group_by("behavior_type")
-        .agg(pl.len().alias("count"))
-    )
+    behavior_counts = df.group_by("behavior_type").agg(pl.len().alias("count"))
     counts = {
         row["behavior_type"]: row["count"]
         for row in behavior_counts.iter_rows(named=True)
@@ -308,12 +314,19 @@ def plot_repurchase_trend(df: pl.DataFrame) -> go.Figure:
     )
     daily_repurchase = (
         daily_buyers.group_by("date")
-        .agg([
-            pl.count().alias("total_buyers"),
-            pl.col("buy_cnt").filter(pl.col("buy_cnt") >= 2).count().alias("repeat_buyers"),
-        ])
+        .agg(
+            [
+                pl.count().alias("total_buyers"),
+                pl.col("buy_cnt")
+                .filter(pl.col("buy_cnt") >= 2)
+                .count()
+                .alias("repeat_buyers"),
+            ]
+        )
         .with_columns(
-            (pl.col("repeat_buyers") / pl.col("total_buyers") * 100).alias("repurchase_rate")
+            (pl.col("repeat_buyers") / pl.col("total_buyers") * 100).alias(
+                "repurchase_rate"
+            )
         )
         .sort("date")
         .to_pandas()
@@ -341,16 +354,27 @@ def plot_repurchase_trend(df: pl.DataFrame) -> go.Figure:
 # ---------------------------------------------------------------------------
 def plot_purchase_segments(df: pl.DataFrame) -> go.Figure:
     """按购买频次划分用户价值段（注意：这不是完整的 RFM，缺少 Recency）。"""
-    user_stats = df.group_by("user_id").agg([
-        pl.count().alias("frequency"),
-        pl.col("behavior_type").filter(pl.col("behavior_type") == "buy").count().alias("purchase_count"),
-    ])
+    user_stats = df.group_by("user_id").agg(
+        [
+            pl.count().alias("frequency"),
+            pl.col("behavior_type")
+            .filter(pl.col("behavior_type") == "buy")
+            .count()
+            .alias("purchase_count"),
+        ]
+    )
 
     segs = [
         (pl.col("purchase_count") == 0, "No Purchase"),
         (pl.col("purchase_count") == 1, "One-time Buyer"),
-        ((pl.col("purchase_count") >= 2) & (pl.col("purchase_count") <= 3), "Occasional Buyer"),
-        ((pl.col("purchase_count") >= 4) & (pl.col("purchase_count") <= 10), "Regular Buyer"),
+        (
+            (pl.col("purchase_count") >= 2) & (pl.col("purchase_count") <= 3),
+            "Occasional Buyer",
+        ),
+        (
+            (pl.col("purchase_count") >= 4) & (pl.col("purchase_count") <= 10),
+            "Regular Buyer",
+        ),
         (pl.col("purchase_count") > 10, "VIP Buyer"),
     ]
     rows = []
@@ -510,10 +534,16 @@ def main():
     all_dates = df["date"].unique().sort().to_list()
     all_behaviors = df["behavior_type"].unique().sort().to_list()
 
-    selected_dates = st.sidebar.multiselect("选择日期", options=all_dates, default=all_dates)
-    selected_behaviors = st.sidebar.multiselect("行为类型", options=all_behaviors, default=all_behaviors)
+    selected_dates = st.sidebar.multiselect(
+        "选择日期", options=all_dates, default=all_dates
+    )
+    selected_behaviors = st.sidebar.multiselect(
+        "行为类型", options=all_behaviors, default=all_behaviors
+    )
     hour_range = st.sidebar.slider("小时范围", 0, 23, (0, 23))
-    weekend_option = st.sidebar.radio("周末筛选", options=["全部", "仅周末", "仅工作日"], index=0)
+    weekend_option = st.sidebar.radio(
+        "周末筛选", options=["全部", "仅周末", "仅工作日"], index=0
+    )
 
     # 刷新缓存按钮
     if st.sidebar.button("🔄 刷新数据缓存"):
@@ -522,7 +552,9 @@ def main():
 
     # 应用筛选
     try:
-        filtered_df = apply_filters(df, selected_dates, selected_behaviors, hour_range, weekend_option)
+        filtered_df = apply_filters(
+            df, selected_dates, selected_behaviors, hour_range, weekend_option
+        )
     except Exception as e:
         st.error(f"筛选时发生错误: {e}")
         return
@@ -562,11 +594,13 @@ def main():
     funnel_fig, funnel_values, funnel_rates = plot_funnel(filtered_df)
     st.plotly_chart(funnel_fig, use_container_width=True)
 
-    funnel_df = pl.DataFrame({
-        "Stage": ["Page View", "Favorite", "Add to Cart", "Purchase"],
-        "Count": funnel_values,
-        "Conversion Rate (%)": [f"{r:.2f}" for r in funnel_rates],
-    })
+    funnel_df = pl.DataFrame(
+        {
+            "Stage": ["Page View", "Favorite", "Add to Cart", "Purchase"],
+            "Count": funnel_values,
+            "Conversion Rate (%)": [f"{r:.2f}" for r in funnel_rates],
+        }
+    )
     st.dataframe(funnel_df.to_pandas(), use_container_width=True)
     st.markdown("---")
 

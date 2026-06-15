@@ -30,13 +30,20 @@ from config import RAW_CSV_PATH, PROCESSED_DATA_DIR
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
-    col, to_timestamp, from_unixtime,
-    year, month, dayofmonth, hour, dayofweek,
-    when, lit, count, countDistinct
+    col,
+    to_timestamp,
+    from_unixtime,
+    year,
+    month,
+    dayofmonth,
+    hour,
+    dayofweek,
+    when,
+    lit,
+    count,
+    countDistinct,
 )
-from pyspark.sql.types import (
-    StructType, StructField, LongType, StringType, IntegerType
-)
+from pyspark.sql.types import StructType, StructField, LongType, StringType, IntegerType
 
 # ---------------------------------------------------------------------------
 # 0. 路径配置
@@ -47,16 +54,18 @@ OUTPUT_PATH = str(PROCESSED_DATA_DIR / "spark_cleaned")
 
 # ---------------------------------------------------------------------------
 
+
 def main():
     # 1. 初始化 SparkSession
     # ---------------------------------------------------------------------------
     spark = (
-        SparkSession.builder
-        .appName("Ecommerce-ETL-UserBehavior")
-        .master("local[*]")                      # 本地模式，使用所有 CPU 核心
-        .config("spark.sql.adaptive.enabled", "true")          # AQE 自适应查询执行
+        SparkSession.builder.appName("Ecommerce-ETL-UserBehavior")
+        .master("local[*]")  # 本地模式，使用所有 CPU 核心
+        .config("spark.sql.adaptive.enabled", "true")  # AQE 自适应查询执行
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
-        .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")  # Kryo 序列化
+        .config(
+            "spark.serializer", "org.apache.spark.serializer.KryoSerializer"
+        )  # Kryo 序列化
         .config("spark.sql.parquet.compression.codec", "snappy")
         .getOrCreate()
     )
@@ -68,13 +77,15 @@ def main():
     # ---------------------------------------------------------------------------
     # 2. 定义 Schema（显式声明，避免运行时推断）
     # ---------------------------------------------------------------------------
-    schema = StructType([
-        StructField("user_id", LongType(), False),
-        StructField("item_id", LongType(), False),
-        StructField("category_id", LongType(), False),
-        StructField("behavior_type", StringType(), False),
-        StructField("timestamp", LongType(), False),
-    ])
+    schema = StructType(
+        [
+            StructField("user_id", LongType(), False),
+            StructField("item_id", LongType(), False),
+            StructField("category_id", LongType(), False),
+            StructField("behavior_type", StringType(), False),
+            StructField("timestamp", LongType(), False),
+        ]
+    )
 
     # ---------------------------------------------------------------------------
     # 3. 读取 CSV 数据
@@ -83,10 +94,9 @@ def main():
     print(f"[INFO] 读取数据源: {input_path}")
 
     df_raw = (
-        spark.read
-        .format("csv")
-        .option("header", "false")      # 无 header
-        .option("inferSchema", "false") # 使用显式 schema
+        spark.read.format("csv")
+        .option("header", "false")  # 无 header
+        .option("inferSchema", "false")  # 使用显式 schema
         .schema(schema)
         .load(input_path)
     )
@@ -105,22 +115,22 @@ def main():
     valid_behaviors = ["pv", "buy", "cart", "fav"]
 
     df_cleaned = (
-        df_raw
-        .filter(
-            (col("user_id") > 0) &
-            (col("item_id") > 0) &
-            (col("category_id") > 0) &
-            (col("timestamp") > 0) &
-            (col("behavior_type").isin(valid_behaviors))
+        df_raw.filter(
+            (col("user_id") > 0)
+            & (col("item_id") > 0)
+            & (col("category_id") > 0)
+            & (col("timestamp") > 0)
+            & (col("behavior_type").isin(valid_behaviors))
         )
         # 4.2 去重：基于全部字段去重，避免重复记录干扰指标计算
-        .dropDuplicates(["user_id", "item_id", "category_id", "behavior_type", "timestamp"])
+        .dropDuplicates(
+            ["user_id", "item_id", "category_id", "behavior_type", "timestamp"]
+        )
     )
 
     # 4.3 类型转换：timestamp 从 Unix 秒级转为 Timestamp 类型
     df_cleaned = df_cleaned.withColumn(
-        "event_time",
-        to_timestamp(from_unixtime(col("timestamp")))
+        "event_time", to_timestamp(from_unixtime(col("timestamp")))
     )
 
     print(f"[INFO] 清洗后数据行数: {df_cleaned.count():,}")
@@ -133,23 +143,26 @@ def main():
     df_featured = (
         df_cleaned
         # 日期相关特征
-        .withColumn("date", col("event_time").cast("date"))          # 日期
-        .withColumn("year", year(col("event_time")))                 # 年
-        .withColumn("month", month(col("event_time")))                # 月
-        .withColumn("day", dayofmonth(col("event_time")))            # 日
-        .withColumn("hour", hour(col("event_time")))                  # 小时
+        .withColumn("date", col("event_time").cast("date"))  # 日期
+        .withColumn("year", year(col("event_time")))  # 年
+        .withColumn("month", month(col("event_time")))  # 月
+        .withColumn("day", dayofmonth(col("event_time")))  # 日
+        .withColumn("hour", hour(col("event_time")))  # 小时
         # day_of_week: 与 preprocess.py 保持一致, 0=周一, 6=周日
         # Spark dayofweek() 返回 1=周日, 7=周六; 减去2并取模转换为 0=周一
         .withColumn("day_of_week", ((dayofweek(col("event_time")) - 2) % 7).cast("int"))
         # 是否周末：周六(5) 或 周日(6)
-        .withColumn("is_weekend", when(col("day_of_week") >= 5, lit(1)).otherwise(lit(0)))
+        .withColumn(
+            "is_weekend", when(col("day_of_week") >= 5, lit(1)).otherwise(lit(0))
+        )
         # 行为类型数值化（便于后续机器学习使用）
-        .withColumn("behavior_score",
+        .withColumn(
+            "behavior_score",
             when(col("behavior_type") == "pv", lit(1))
             .when(col("behavior_type") == "fav", lit(2))
             .when(col("behavior_type") == "cart", lit(3))
             .when(col("behavior_type") == "buy", lit(4))
-            .otherwise(lit(0))
+            .otherwise(lit(0)),
         )
     )
 
@@ -164,18 +177,19 @@ def main():
     df_select.show(5, truncate=False)
 
     # 6.2 filter：条件过滤
-    df_filter = df_featured.filter((col("behavior_type") == "buy") & (col("is_weekend") == 1))
+    df_filter = df_featured.filter(
+        (col("behavior_type") == "buy") & (col("is_weekend") == 1)
+    )
     print(f"[DEMO] filter 结果 - 周末购买行为数: {df_filter.count():,}")
 
     # 6.3 groupBy + agg：分组聚合
     print("[DEMO] groupBy + agg 结果 - 各行为类型统计:")
     (
-        df_featured
-        .groupBy("behavior_type")
+        df_featured.groupBy("behavior_type")
         .agg(
             count("*").alias("total_count"),
             countDistinct("user_id").alias("unique_users"),
-            countDistinct("item_id").alias("unique_items")
+            countDistinct("item_id").alias("unique_items"),
         )
         .orderBy(col("total_count").desc())
         .show(truncate=False)
@@ -192,15 +206,13 @@ def main():
 
     # 删除已存在的输出目录（Spark 不允许覆盖）
     import shutil
+
     if os.path.exists(OUTPUT_PATH):
         shutil.rmtree(OUTPUT_PATH)
 
     # 以 date 为分区键进行分区存储，便于后续按日期过滤查询
     # 注意：若 date 基数过大（如亿级），则不宜分区；此处样本数据量适中，可演示分区
-    df_featured.write \
-        .mode("overwrite") \
-        .partitionBy("date") \
-        .parquet(OUTPUT_PATH)
+    df_featured.write.mode("overwrite").partitionBy("date").parquet(OUTPUT_PATH)
 
     print("[INFO] Parquet 数据保存完成")
 

@@ -30,24 +30,33 @@ def test_cleaned_data_exists():
 
 def test_cleaned_data_columns(cleaned_df):
     """清洗后的数据必须包含预期的列。"""
-    expected_cols = {'user_id', 'item_id', 'category_id', 'behavior_type', 'timestamp', 'date'}
-    assert expected_cols.issubset(set(cleaned_df.columns)), \
+    expected_cols = {
+        "user_id",
+        "item_id",
+        "category_id",
+        "behavior_type",
+        "timestamp",
+        "date",
+    }
+    assert expected_cols.issubset(set(cleaned_df.columns)), (
         f"Missing columns: {expected_cols - set(cleaned_df.columns)}"
+    )
 
 
 def test_behavior_types_valid(cleaned_df):
     """behavior_type 必须是限定值之一。"""
-    valid_behaviors = {'pv', 'buy', 'cart', 'fav'}
-    assert set(cleaned_df['behavior_type'].unique()).issubset(valid_behaviors), \
+    valid_behaviors = {"pv", "buy", "cart", "fav"}
+    assert set(cleaned_df["behavior_type"].unique()).issubset(valid_behaviors), (
         f"Invalid behavior types: {set(cleaned_df['behavior_type'].unique()) - valid_behaviors}"
+    )
 
 
 def test_timestamps_positive(cleaned_df):
     """timestamp 必须为正数。"""
-    assert (cleaned_df['timestamp'] > 0).all(), "Found non-positive timestamps"
+    assert (cleaned_df["timestamp"] > 0).all(), "Found non-positive timestamps"
 
 
 def test_ids_positive(cleaned_df):
     """user_id, item_id, category_id 必须为正数。"""
-    for col in ['user_id', 'item_id', 'category_id']:
+    for col in ["user_id", "item_id", "category_id"]:
         assert (cleaned_df[col] > 0).all(), f"Found non-positive {col}"

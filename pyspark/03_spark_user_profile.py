@@ -25,8 +25,16 @@ from pathlib import Path
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
-    col, count, countDistinct, sum as spark_sum, max as spark_max,
-    when, lit, row_number, datediff, ntile
+    col,
+    count,
+    countDistinct,
+    sum as spark_sum,
+    max as spark_max,
+    when,
+    lit,
+    row_number,
+    datediff,
+    ntile,
 )
 from pyspark.sql.window import Window
 
@@ -45,12 +53,12 @@ OUTPUT_PATH = os.path.join(str(SPARK_OUTPUT_DIR), "user_profile")
 
 # ---------------------------------------------------------------------------
 
+
 def main():
     # 1. 初始化 SparkSession
     # ---------------------------------------------------------------------------
     spark = (
-        SparkSession.builder
-        .appName("Ecommerce-User-Profile")
+        SparkSession.builder.appName("Ecommerce-User-Profile")
         .master("local[*]")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
@@ -87,25 +95,26 @@ def main():
     print("[INFO] 聚合用户行为统计特征...")
 
     # 按 user_id 聚合，计算各类行为次数
-    df_user_stats = (
-        df
-        .groupBy("user_id")
-        .agg(
-            count("*").alias("total_actions"),
-            spark_sum(when(col("behavior_type") == "pv", 1).otherwise(0)).alias("pv_count"),
-            spark_sum(when(col("behavior_type") == "buy", 1).otherwise(0)).alias("buy_count"),
-            spark_sum(when(col("behavior_type") == "cart", 1).otherwise(0)).alias("cart_count"),
-            spark_sum(when(col("behavior_type") == "fav", 1).otherwise(0)).alias("fav_count"),
-            spark_max("date").alias("last_active_date"),          # 最近一次行为日期
-            countDistinct("item_id").alias("unique_items"),        # 交互过的商品数
-            countDistinct("category_id").alias("unique_categories") # 交互过的类目数
-        )
+    df_user_stats = df.groupBy("user_id").agg(
+        count("*").alias("total_actions"),
+        spark_sum(when(col("behavior_type") == "pv", 1).otherwise(0)).alias("pv_count"),
+        spark_sum(when(col("behavior_type") == "buy", 1).otherwise(0)).alias(
+            "buy_count"
+        ),
+        spark_sum(when(col("behavior_type") == "cart", 1).otherwise(0)).alias(
+            "cart_count"
+        ),
+        spark_sum(when(col("behavior_type") == "fav", 1).otherwise(0)).alias(
+            "fav_count"
+        ),
+        spark_max("date").alias("last_active_date"),  # 最近一次行为日期
+        countDistinct("item_id").alias("unique_items"),  # 交互过的商品数
+        countDistinct("category_id").alias("unique_categories"),  # 交互过的类目数
     )
 
     # 计算 Recency：参考日期 - 最近一次行为日期
     df_user_stats = df_user_stats.withColumn(
-        "recency_days",
-        datediff(lit(reference_date), col("last_active_date"))
+        "recency_days", datediff(lit(reference_date), col("last_active_date"))
     )
 
     print("[INFO] 用户行为统计特征预览:")
@@ -118,8 +127,7 @@ def main():
 
     # 4.1 统计每个用户在每个类目下的点击次数
     df_category_pv = (
-        df
-        .filter(col("behavior_type") == "pv")
+        df.filter(col("behavior_type") == "pv")
         .groupBy("user_id", "category_id")
         .agg(count("*").alias("category_pv_count"))
     )
@@ -128,8 +136,7 @@ def main():
     window_user = Window.partitionBy("user_id").orderBy(col("category_pv_count").desc())
 
     df_preferred_category = (
-        df_category_pv
-        .withColumn("rn", row_number().over(window_user))
+        df_category_pv.withColumn("rn", row_number().over(window_user))
         .filter(col("rn") == 1)
         .select("user_id", "category_id", "category_pv_count")
         .withColumnRenamed("category_id", "preferred_category")
@@ -161,42 +168,57 @@ def main():
     window_all_recency = Window.orderBy(col("recency_days"))
 
     df_profile = (
-        df_profile
-        .withColumn("action_decile", ntile(10).over(window_all))      # 行为数十分位 (1=最少, 10=最多)
-        .withColumn("recency_decile", ntile(10).over(window_all_recency))  # Recency 十分位 (1=最近, 10=最久)
+        df_profile.withColumn(
+            "action_decile", ntile(10).over(window_all)
+        ).withColumn(  # 行为数十分位 (1=最少, 10=最多)
+            "recency_decile", ntile(10).over(window_all_recency)
+        )  # Recency 十分位 (1=最近, 10=最久)
     )
 
     # 定义标签逻辑
     df_profile = df_profile.withColumn(
         "user_label",
         when(
-            (col("action_decile") >= 8) & (col("buy_count") > 0) & (col("recency_days") <= 3),
-            lit("高活跃")
-        ).when(
-            (col("action_decile") >= 5) & (col("recency_days") <= 7),
-            lit("一般")
-        ).when(
-            (col("recency_days") > 7) & (col("recency_days") <= 30),
-            lit("沉睡")
-        ).when(
-            (col("recency_days") > 30) | ((col("action_decile") <= 2) & (col("recency_days") > 7)),
-            lit("流失")
-        ).otherwise(lit("一般"))
+            (col("action_decile") >= 8)
+            & (col("buy_count") > 0)
+            & (col("recency_days") <= 3),
+            lit("高活跃"),
+        )
+        .when((col("action_decile") >= 5) & (col("recency_days") <= 7), lit("一般"))
+        .when((col("recency_days") > 7) & (col("recency_days") <= 30), lit("沉睡"))
+        .when(
+            (col("recency_days") > 30)
+            | ((col("action_decile") <= 2) & (col("recency_days") > 7)),
+            lit("流失"),
+        )
+        .otherwise(lit("一般")),
     )
 
     # 计算购买转化率
     df_profile = df_profile.withColumn(
         "buy_conversion_rate",
-        when(col("pv_count") > 0, round(col("buy_count") / col("pv_count"), 4)).otherwise(lit(0.0))
+        when(
+            col("pv_count") > 0, round(col("buy_count") / col("pv_count"), 4)
+        ).otherwise(lit(0.0)),
     )
 
     print("[INFO] 用户画像标签分布:")
-    df_profile.groupBy("user_label").count().orderBy(col("count").desc()).show(truncate=False)
+    df_profile.groupBy("user_label").count().orderBy(col("count").desc()).show(
+        truncate=False
+    )
 
     print("[INFO] 用户画像完整预览:")
     df_profile.select(
-        "user_id", "total_actions", "pv_count", "buy_count", "cart_count", "fav_count",
-        "recency_days", "preferred_category", "user_label", "buy_conversion_rate"
+        "user_id",
+        "total_actions",
+        "pv_count",
+        "buy_count",
+        "cart_count",
+        "fav_count",
+        "recency_days",
+        "preferred_category",
+        "user_label",
+        "buy_conversion_rate",
     ).show(10, truncate=False)
 
     # ---------------------------------------------------------------------------
@@ -210,7 +232,9 @@ def main():
     os.makedirs(OUTPUT_PATH, exist_ok=True)
 
     # 保存为 Parquet（列式存储，适合后续机器学习读取）
-    df_profile.write.mode("overwrite").parquet(os.path.join(OUTPUT_PATH, "user_profile.parquet"))
+    df_profile.write.mode("overwrite").parquet(
+        os.path.join(OUTPUT_PATH, "user_profile.parquet")
+    )
 
     # 保存为 CSV（便于人工查看）
     df_profile.coalesce(1).write.mode("overwrite").option("header", "true").csv(

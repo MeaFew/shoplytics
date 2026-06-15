@@ -58,6 +58,7 @@ DTYPE_MAP: dict[str, pl.DataType] = {
     "behavior_type": pl.Utf8,
 }
 
+
 # ---------------------------------------------------------------------------
 # 数据质量校验
 # ---------------------------------------------------------------------------
@@ -95,7 +96,9 @@ class DataQualityReport:
         }
 
     def save(self, path: Path) -> None:
-        path.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
+        path.write_text(
+            json.dumps(self.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         logger.info(f"数据质量报告已保存: {path}")
 
 
@@ -137,7 +140,9 @@ def load_raw_data(filepath: Path) -> pl.DataFrame:
     elapsed = time.perf_counter() - start
     mem_mb = df.estimated_size() / 1024**2
 
-    logger.info(f"加载完成: {df.shape[0]:,} 条记录, {df.shape[1]} 列 | 耗时: {elapsed:.2f}s | 内存: {mem_mb:.1f}MB")
+    logger.info(
+        f"加载完成: {df.shape[0]:,} 条记录, {df.shape[1]} 列 | 耗时: {elapsed:.2f}s | 内存: {mem_mb:.1f}MB"
+    )
     return df
 
 
@@ -170,18 +175,25 @@ def feature_engineering(lf: pl.LazyFrame) -> pl.LazyFrame:
     lf = lf.with_columns(
         pl.from_epoch("timestamp", time_unit="s").dt.date().alias("date"),
         pl.from_epoch("timestamp", time_unit="s").dt.hour().cast(pl.Int8).alias("hour"),
-        ((pl.from_epoch("timestamp", time_unit="s").dt.weekday() - 1).cast(pl.Int8)).alias("day_of_week"),
+        (
+            (pl.from_epoch("timestamp", time_unit="s").dt.weekday() - 1).cast(pl.Int8)
+        ).alias("day_of_week"),
         pl.when((pl.from_epoch("timestamp", time_unit="s").dt.weekday() - 1) >= 5)
         .then(1)
         .otherwise(0)
         .cast(pl.Int8)
         .alias("is_weekend"),
     ).with_columns(
-        pl.when(pl.col("hour") < 6).then(pl.lit("凌晨"))
-        .when(pl.col("hour") < 12).then(pl.lit("上午"))
-        .when(pl.col("hour") < 14).then(pl.lit("中午"))
-        .when(pl.col("hour") < 18).then(pl.lit("下午"))
-        .when(pl.col("hour") < 22).then(pl.lit("晚上"))
+        pl.when(pl.col("hour") < 6)
+        .then(pl.lit("凌晨"))
+        .when(pl.col("hour") < 12)
+        .then(pl.lit("上午"))
+        .when(pl.col("hour") < 14)
+        .then(pl.lit("中午"))
+        .when(pl.col("hour") < 18)
+        .then(pl.lit("下午"))
+        .when(pl.col("hour") < 22)
+        .then(pl.lit("晚上"))
         .otherwise(pl.lit("深夜"))
         .alias("time_period"),
     )
@@ -210,7 +222,9 @@ def save_processed_data(df: pl.DataFrame, csv_path: Path, parquet_path: Path) ->
 def main() -> None:
     parser = argparse.ArgumentParser(description="电商用户行为数据预处理 (改进版)")
     parser.add_argument("--input", type=Path, default=RAW_CSV_PATH, help="原始数据路径")
-    parser.add_argument("--output-dir", type=Path, default=PROCESSED_DATA_DIR, help="输出目录")
+    parser.add_argument(
+        "--output-dir", type=Path, default=PROCESSED_DATA_DIR, help="输出目录"
+    )
     args = parser.parse_args()
 
     ensure_dirs()
@@ -230,7 +244,9 @@ def main() -> None:
 
     # 2. Schema 校验
     validate_schema(df_raw, COLUMN_NAMES)
-    report.null_counts = validate_no_critical_nulls(df_raw, ["user_id", "item_id", "behavior_type", "timestamp"])
+    report.null_counts = validate_no_critical_nulls(
+        df_raw, ["user_id", "item_id", "behavior_type", "timestamp"]
+    )
 
     # 3. 构建 Lazy 执行计划
     lf = df_raw.lazy()
@@ -254,7 +270,9 @@ def main() -> None:
     report.removed_invalid_behavior = 0
     report.removed_duplicates = report.original_count - report.cleaned_count
 
-    logger.info(f"清洗完成: 原始 {report.original_count:,} 条 → 清洗后 {report.cleaned_count:,} 条")
+    logger.info(
+        f"清洗完成: 原始 {report.original_count:,} 条 → 清洗后 {report.cleaned_count:,} 条"
+    )
 
     # 7. 保存
     csv_out = CLEANED_CSV_PATH

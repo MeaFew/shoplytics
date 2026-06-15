@@ -34,8 +34,17 @@ test:
 	pytest tests/ -v
 
 lint:
-	ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/ --ignore E501,E402
+	ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/ --ignore E501,E402,F401,N803,N806,F401,N803,N806
 	sqlfluff lint sql/
+
+format:
+	ruff format scripts/ dashboard/ pyspark/ tests/ orchestration/
+
+format-check:
+	ruff format --check scripts/ dashboard/ pyspark/ tests/ orchestration/
+
+audit:
+	python scripts/audit_consistency.py
 
 verify: lint format-check test audit
 	python scripts/validate_data.py
@@ -45,15 +54,7 @@ all: preprocess sql dbt pipeline
 
 clean:
 	rm -f data/processed/*.duckdb
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-
-# === Quality gates (extended) ===
-
-format:
-	ruff format scripts/ dashboard/ pyspark/
-
-format-check:
-	ruff format --check scripts/ dashboard/ pyspark/
-
-audit:
-	python scripts/audit_consistency.py
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true

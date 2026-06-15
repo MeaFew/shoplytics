@@ -1,39 +1,32 @@
-# Python
+.git
+.gitignore
+
 __pycache__/
+*.py[cod]
 *.pyc
-*.pyo
-*.egg-info/
+.pytest_cache/
+.ruff_cache/
 .venv/
 venv/
 env/
+.env
 
-# Data & outputs (mounted as volumes)
-data/
-images/
-reports/
-*.duckdb
-*.db
-
-# Jupyter
 .ipynb_checkpoints/
 
-# Git
-.git/
-.gitignore
-
-# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
 .DS_Store
 Thumbs.db
 
-# Documentation
-*.md
-!README.md
+data/
+models/
+reports/
+images/
+*.duckdb
+*.db
+*.zip
 
-# Tests (not needed in image)
 tests/

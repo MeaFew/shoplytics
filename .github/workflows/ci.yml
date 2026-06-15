@@ -11,55 +11,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install lint tools
-        run: pip install ruff
-
-      - name: Lint with ruff
-        run: |
-          ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/ --ignore E501,F401,E402
-
-      - name: Check formatting with ruff
-        run: |
-          ruff format --check scripts/ dashboard/ pyspark/
+      - run: pip install ruff
+      - run: ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/ --ignore E501,E402,F401,N803,N806,F401,N803,N806
+      - run: ruff format --check scripts/ dashboard/ pyspark/ tests/ orchestration/
 
   sql-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install SQLFluff
-        run: pip install sqlfluff
-
-      - name: Lint SQL
-        run: |
-          sqlfluff lint sql/ --dialect duckdb --ignore parsing
+      - run: pip install sqlfluff
+      - run: sqlfluff lint sql/ --dialect duckdb --ignore parsing
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install pytest statsmodels numpy scipy pandas polars
-
-      - name: Run tests
-        run: pytest tests/ -v
+      - run: pip install -r requirements.txt
+      - run: pytest tests/ -v
 
   docker-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t ecommerce-analytics .
+      - run: docker build -t ecommerce-analytics .

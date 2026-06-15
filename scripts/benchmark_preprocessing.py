@@ -76,10 +76,16 @@ def polars_pipeline(csv_path: Path) -> dict[str, float]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Benchmark Polars vs Pandas preprocessing")
+    parser = argparse.ArgumentParser(
+        description="Benchmark Polars vs Pandas preprocessing"
+    )
     parser.add_argument("--input", type=Path, default=RAW_CSV_PATH)
-    parser.add_argument("--output", type=Path, default=REPORTS_DIR / "preprocessing_benchmark.json")
-    parser.add_argument("--pandas", action="store_true", help="Also run Pandas benchmark")
+    parser.add_argument(
+        "--output", type=Path, default=REPORTS_DIR / "preprocessing_benchmark.json"
+    )
+    parser.add_argument(
+        "--pandas", action="store_true", help="Also run Pandas benchmark"
+    )
     args = parser.parse_args()
 
     if not args.input.exists():
@@ -89,13 +95,17 @@ def main() -> int:
 
     print(f"Running Polars benchmark on {args.input} ...")
     polars_result = polars_pipeline(args.input)
-    print(f"Polars: {polars_result['elapsed_seconds']:.3f}s for {polars_result['rows']:,} rows")
+    print(
+        f"Polars: {polars_result['elapsed_seconds']:.3f}s for {polars_result['rows']:,} rows"
+    )
 
     pandas_result = None
     if args.pandas:
         print(f"\nRunning Pandas benchmark on {args.input} ...")
         pandas_result = pandas_pipeline(args.input)
-        print(f"Pandas: {pandas_result['elapsed_seconds']:.3f}s for {pandas_result['rows']:,} rows")
+        print(
+            f"Pandas: {pandas_result['elapsed_seconds']:.3f}s for {pandas_result['rows']:,} rows"
+        )
         speedup = pandas_result["elapsed_seconds"] / polars_result["elapsed_seconds"]
         print(f"Speedup (Pandas / Polars): {speedup:.1f}x")
 

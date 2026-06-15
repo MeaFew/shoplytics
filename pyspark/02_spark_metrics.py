@@ -24,8 +24,14 @@ from pathlib import Path
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
-    col, count, countDistinct, sum as spark_sum, avg,
-    round, lit, when
+    col,
+    count,
+    countDistinct,
+    sum as spark_sum,
+    avg,
+    round,
+    lit,
+    when,
 )
 from pyspark.sql.window import Window
 
@@ -44,12 +50,12 @@ OUTPUT_PATH = os.path.join(str(SPARK_OUTPUT_DIR), "spark_metrics")
 
 # ---------------------------------------------------------------------------
 
+
 def main():
     # 1. 初始化 SparkSession
     # ---------------------------------------------------------------------------
     spark = (
-        SparkSession.builder
-        .appName("Ecommerce-Metrics-Computation")
+        SparkSession.builder.appName("Ecommerce-Metrics-Computation")
         .master("local[*]")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
@@ -102,7 +108,9 @@ def main():
     # 计算转化率：购买量 / PV 量（注意处理除零）
     df_daily = df_daily.withColumn(
         "conversion_rate",
-        when(col("pv_count") > 0, round(col("buy_count") / col("pv_count") * 100, 4)).otherwise(lit(0.0))
+        when(
+            col("pv_count") > 0, round(col("buy_count") / col("pv_count") * 100, 4)
+        ).otherwise(lit(0.0)),
     )
 
     print("[INFO] 每日核心指标预览:")
@@ -114,13 +122,16 @@ def main():
     print("[INFO] 计算每小时流量分布...")
 
     df_hourly = (
-        df
-        .groupBy("date", "hour")
+        df.groupBy("date", "hour")
         .agg(
             count("*").alias("total_events"),
             countDistinct("user_id").alias("hourly_uv"),
-            spark_sum(when(col("behavior_type") == "pv", 1).otherwise(0)).alias("pv_count"),
-            spark_sum(when(col("behavior_type") == "buy", 1).otherwise(0)).alias("buy_count")
+            spark_sum(when(col("behavior_type") == "pv", 1).otherwise(0)).alias(
+                "pv_count"
+            ),
+            spark_sum(when(col("behavior_type") == "buy", 1).otherwise(0)).alias(
+                "buy_count"
+            ),
         )
         .orderBy("date", "hour")
     )
@@ -137,18 +148,18 @@ def main():
     window_7d = Window.orderBy("date").rowsBetween(-6, 0)
 
     df_daily_ma = df_daily.withColumn(
-        "dau_7d_ma",
-        round(avg(col("dau")).over(window_7d), 2)
+        "dau_7d_ma", round(avg(col("dau")).over(window_7d), 2)
     )
 
     # 同时计算 7 日移动平均转化率
     df_daily_ma = df_daily_ma.withColumn(
-        "conversion_rate_7d_ma",
-        round(avg(col("conversion_rate")).over(window_7d), 4)
+        "conversion_rate_7d_ma", round(avg(col("conversion_rate")).over(window_7d), 4)
     )
 
     print("[INFO] 7 日移动平均 DAU 预览:")
-    df_daily_ma.select("date", "dau", "dau_7d_ma", "conversion_rate", "conversion_rate_7d_ma").show(15, truncate=False)
+    df_daily_ma.select(
+        "date", "dau", "dau_7d_ma", "conversion_rate", "conversion_rate_7d_ma"
+    ).show(15, truncate=False)
 
     # ---------------------------------------------------------------------------
     # 6. 行为类型占比分析（每日）
@@ -156,17 +167,12 @@ def main():
     print("[INFO] 计算每日行为类型占比...")
 
     df_behavior_ratio = (
-        df
-        .groupBy("date", "behavior_type")
+        df.groupBy("date", "behavior_type")
         .agg(count("*").alias("behavior_count"))
         .withColumn(
-            "total_daily",
-            spark_sum("behavior_count").over(Window.partitionBy("date"))
+            "total_daily", spark_sum("behavior_count").over(Window.partitionBy("date"))
         )
-        .withColumn(
-            "ratio",
-            round(col("behavior_count") / col("total_daily") * 100, 2)
-        )
+        .withColumn("ratio", round(col("behavior_count") / col("total_daily") * 100, 2))
         .orderBy("date", col("behavior_count").desc())
     )
 
