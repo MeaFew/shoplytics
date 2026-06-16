@@ -80,6 +80,10 @@ images/*.jpg
 !reports/.gitkeep
 !images/.gitkeep
 
+# dbt build artifacts
+dbt/target/
+dbt/.user.yml
+
 # Logs
 *.log
 lightning_logs/

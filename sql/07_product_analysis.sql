@@ -239,6 +239,6 @@ SELECT
     -- 使用窗口函数计算该商品对在所有组合中的排名
     RANK() OVER (ORDER BY COUNT(*) DESC) AS pair_rank
 FROM item_pairs
-GROUP BY item_a, item_b
+GROUP BY item_a, item_b, cat_a, cat_b
 ORDER BY co_buy_count DESC
 LIMIT 20;

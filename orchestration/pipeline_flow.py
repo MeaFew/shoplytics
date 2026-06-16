@@ -147,4 +147,4 @@ if __name__ == "__main__":
         print(run_sql_analysis.fn())
         print(run_dbt_models.fn())
         print(run_modeling_pipeline.fn())
-        print("Done — install Prefect (pip install prefect) for full orchestration.")
+        print("Done - install Prefect (pip install prefect) for full orchestration.")
