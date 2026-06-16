@@ -14,7 +14,7 @@
 ## 安装依赖
 
 ```bash
-cd ecommerce-user-analytics/dashboard
+cd shoplytics/dashboard
 pip install -r requirements.txt
 ```
 
