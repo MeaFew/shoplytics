@@ -9,6 +9,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Force UTF-8 mode for child processes on Windows before any heavy imports.
+os.environ.setdefault("PYTHONUTF8", "1")
+
 
 def run(cmd: str, cwd: Path | None = None):
     print(f"\n{'=' * 60}")
@@ -31,11 +34,12 @@ def main():
     steps = [
         ("Preprocessing", "python scripts/preprocess.py --input data/raw/UserBehavior.csv --output data/processed/"),
         ("SQL Analysis", "python scripts/run_sql.py"),
-        ("dbt Models", "cd dbt && dbt run && dbt test"),
+        # Run dbt from the project root so relative paths (data/processed/...) resolve correctly.
+        ("dbt Models", "dbt run --project-dir dbt --profiles-dir dbt && dbt test --project-dir dbt --profiles-dir dbt"),
         ("Analysis Pipeline", "python scripts/pipeline.py"),
     ]
 
-    print("E-commerce User Behavior Analytics — Full Pipeline")
+    print("E-commerce User Behavior Analytics - Full Pipeline")
     print("=" * 60)
     print("Note: SQL/dbt steps require DuckDB and dbt installed. Install with:")
     print("      pip install duckdb dbt-duckdb")

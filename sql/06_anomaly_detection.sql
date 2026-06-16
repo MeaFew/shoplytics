@@ -65,13 +65,13 @@ stats AS (
     SELECT 
         AVG(dau) AS avg_dau,
         -- 总体标准差计算: sqrt(avg(x^2) - avg(x)^2)
-        SQRT(AVG(dau * dau) - AVG(dau) * AVG(dau)) AS std_dau,
+        SQRT(GREATEST(AVG(dau * dau) - AVG(dau) * AVG(dau), 0)) AS std_dau,
         AVG(pv_count) AS avg_pv,
-        SQRT(AVG(pv_count * pv_count) - AVG(pv_count) * AVG(pv_count)) AS std_pv,
+        SQRT(GREATEST(AVG(pv_count * pv_count) - AVG(pv_count) * AVG(pv_count), 0)) AS std_pv,
         AVG(buy_count) AS avg_buy,
-        SQRT(AVG(buy_count * buy_count) - AVG(buy_count) * AVG(buy_count)) AS std_buy,
+        SQRT(GREATEST(AVG(buy_count * buy_count) - AVG(buy_count) * AVG(buy_count), 0)) AS std_buy,
         AVG(conversion_rate) AS avg_rate,
-        SQRT(AVG(conversion_rate * conversion_rate) - AVG(conversion_rate) * AVG(conversion_rate)) AS std_rate
+        SQRT(GREATEST(AVG(conversion_rate * conversion_rate) - AVG(conversion_rate) * AVG(conversion_rate), 0)) AS std_rate
     FROM daily_metrics
 )
 SELECT 
@@ -123,16 +123,16 @@ moving_stats AS (
         -- 前3日移动平均（不含当日）
         AVG(dau) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) AS dau_ma3,
         -- 前3日移动标准差
-        SQRT(AVG(dau * dau) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) 
-             - POWER(AVG(dau) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING), 2)) AS dau_std3,
+        SQRT(GREATEST(AVG(dau * dau) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) 
+             - POWER(AVG(dau) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING), 2), 0)) AS dau_std3,
         -- 同理计算PV
         AVG(pv_count) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) AS pv_ma3,
-        SQRT(AVG(pv_count * pv_count) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) 
-             - POWER(AVG(pv_count) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING), 2)) AS pv_std3,
+        SQRT(GREATEST(AVG(pv_count * pv_count) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) 
+             - POWER(AVG(pv_count) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING), 2), 0)) AS pv_std3,
         -- 同理计算转化率
         AVG(conversion_rate) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) AS rate_ma3,
-        SQRT(AVG(conversion_rate * conversion_rate) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) 
-             - POWER(AVG(conversion_rate) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING), 2)) AS rate_std3,
+        SQRT(GREATEST(AVG(conversion_rate * conversion_rate) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING) 
+             - POWER(AVG(conversion_rate) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING), 2), 0)) AS rate_std3,
         -- 行号（前3日不足时标记）
         ROW_NUMBER() OVER (ORDER BY date) AS rn
     FROM daily_metrics
@@ -231,11 +231,11 @@ hourly_stats AS (
     SELECT 
         hour,
         AVG(hourly_dau) AS avg_dau,
-        SQRT(AVG(hourly_dau * hourly_dau) - AVG(hourly_dau) * AVG(hourly_dau)) AS std_dau,
+        SQRT(GREATEST(AVG(hourly_dau * hourly_dau) - AVG(hourly_dau) * AVG(hourly_dau), 0)) AS std_dau,
         AVG(pv_count) AS avg_pv,
-        SQRT(AVG(pv_count * pv_count) - AVG(pv_count) * AVG(pv_count)) AS std_pv,
+        SQRT(GREATEST(AVG(pv_count * pv_count) - AVG(pv_count) * AVG(pv_count), 0)) AS std_pv,
         AVG(conversion_rate) AS avg_rate,
-        SQRT(AVG(conversion_rate * conversion_rate) - AVG(conversion_rate) * AVG(conversion_rate)) AS std_rate
+        SQRT(GREATEST(AVG(conversion_rate * conversion_rate) - AVG(conversion_rate) * AVG(conversion_rate), 0)) AS std_rate
     FROM hourly_metrics
     GROUP BY hour
 )

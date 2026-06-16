@@ -52,7 +52,9 @@ def generate_mock_data(n_records=100000, random_seed=42):
     start_time = datetime.strptime(START_DATE, "%Y-%m-%d")
     num_days = (datetime.strptime(END_DATE, "%Y-%m-%d") - start_time).days + 1
     # 用户和商品ID池
-    n_users = max(1000, n_records // 100)
+    # 提高用户数量密度，使活跃天数分布更接近真实电商场景（大量低频用户），
+    # 从而保证下游流失预测等模型能观察到正负样本。
+    n_users = max(5000, n_records // 10)
     n_items = max(5000, n_records // 20)
     n_categories = 200
 

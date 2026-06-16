@@ -20,8 +20,7 @@ CREATE TABLE user_behavior (
     category_id   INTEGER,
     behavior_type TEXT,    -- 'pv'(点击), 'buy'(购买), 'cart'(加购), 'fav'(收藏)
     timestamp     INTEGER, -- Unix时间戳(秒)
-    datetime      TEXT,    -- 日期时间字符串
-    date          TEXT,    -- 日期
+    date          DATE,    -- 日期
     hour          INTEGER, -- 小时(0-23)
     day_of_week   INTEGER, -- 星期(0=周一,6=周日)
     is_weekend    INTEGER, -- 是否周末(0/1)
@@ -140,7 +139,8 @@ SELECT '数据库表结构、索引和视图创建完成' AS status;
 -- 生产环境：通过 ETL pipeline（Spark / DataX）写入分区表
 -- --------------------------------------------------------
 INSERT INTO user_behavior
-SELECT * FROM read_csv_auto(
+SELECT *
+FROM read_csv_auto(
     'data/processed/user_behavior_cleaned.csv',
     header = true
 );
