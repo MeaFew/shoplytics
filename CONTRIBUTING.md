@@ -6,8 +6,8 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/MeaFew/ecommerce-user-analytics.git
-cd ecommerce-user-analytics
+git clone https://github.com/MeaFew/shoplytics.git
+cd shoplytics
 
 # 2. 创建虚拟环境 (推荐 Python 3.12)
 python -m venv .venv

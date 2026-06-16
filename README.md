@@ -5,12 +5,12 @@
     <sub>覆盖数据工程 · SQL 分析 · 统计建模 · A/B 测试 · 交互式交付</sub>
   </p>
   <p align="center">
-    <a href="https://github.com/MeaFew/ecommerce-user-analytics/actions"><img src="https://github.com/MeaFew/ecommerce-user-analytics/workflows/CI/badge.svg" alt="CI"></a>
+    <a href="https://github.com/MeaFew/shoplytics/actions"><img src="https://github.com/MeaFew/shoplytics/workflows/CI/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white" alt="Python">
     <img src="https://img.shields.io/badge/code%20style-ruff-000000?logo=ruff&logoColor=white" alt="Ruff">
     <img src="https://img.shields.io/badge/engine-DuckDB-FFF000?logo=duckdb&logoColor=black" alt="DuckDB">
     <img src="https://img.shields.io/badge/de-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit">
-    <a href="https://meafew.github.io/ecommerce-user-analytics/"><img src="https://img.shields.io/badge/pages-live-blue?logo=githubpages&logoColor=white" alt="GitHub Pages"></a>
+    <a href="https://meafew.github.io/shoplytics/"><img src="https://img.shields.io/badge/pages-live-blue?logo=githubpages&logoColor=white" alt="GitHub Pages"></a>
     <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   </p>
   <p align="center">
@@ -59,8 +59,8 @@
 ## 快速开始
 
 ```bash
-git clone https://github.com/MeaFew/ecommerce-user-analytics.git
-cd ecommerce-user-analytics
+git clone https://github.com/MeaFew/shoplytics.git
+cd shoplytics
 
 # 下载数据集（GitHub Releases，约 264MB）
 bash download_data.sh
@@ -170,7 +170,7 @@ make dashboard
 ## 项目结构
 
 ```
-ecommerce-user-analytics/
+shoplytics/
 ├── scripts/                      # Python 工具脚本
 │   ├── preprocess.py             #   Polars ETL（~0.4s / 29M rows）
 │   ├── pipeline.py               #   管线编排入口（加载数据 → 调度各模块 → 汇总）
@@ -261,9 +261,9 @@ docker compose -f docker-compose.superset.yml up -d
 
 | 项目 | 仓库 | 简介 |
 |------|------|------|
-| 营销归因与预算优化 | [MeaFew/marketing-attribution-mmm](https://github.com/MeaFew/marketing-attribution-mmm) | MMM + 多触点归因 + 预算优化 |
-| 信用风险评分 | [MeaFew/credit-risk-scoring](https://github.com/MeaFew/credit-risk-scoring) | WOE/IV + XGBoost/LightGBM + SHAP 可解释性 |
-| 多元时序预测 | [MeaFew/multivariate-timeseries-forecasting](https://github.com/MeaFew/multivariate-timeseries-forecasting) | LSTM / Transformer / XGBoost 时序预测对比 |
+| 营销归因与预算优化 | [MeaFew/attributor](https://github.com/MeaFew/attributor) | MMM + 多触点归因 + 预算优化 |
+| 信用风险评分 | [MeaFew/riskscore](https://github.com/MeaFew/riskscore) | WOE/IV + XGBoost/LightGBM + SHAP 可解释性 |
+| 多元时序预测 | [MeaFew/foresight](https://github.com/MeaFew/foresight) | LSTM / Transformer / XGBoost 时序预测对比 |
 
 ## 许可证
 
