@@ -14,7 +14,7 @@ if str(project_root) not in sys.path:
 import polars as pl
 
 from config import CLEANED_CSV_PATH
-from scripts.validate_data import validate, EXPECTED_COLUMNS
+from scripts.validate_data import EXPECTED_COLUMNS, validate
 
 
 def test_validate_data_passes_on_cleaned_data():

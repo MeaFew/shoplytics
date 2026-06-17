@@ -25,11 +25,12 @@ import json
 import logging
 import warnings
 
-from config import PROJECT_ROOT, ensure_dirs
 from ab_testing import run_ab_test
 from churn_prediction import run_churn_prediction
 from eda import load_data, run_eda
 from recommendation import run_cohort, run_ltv, run_recommendation
+
+from config import PROJECT_ROOT, ensure_dirs
 
 # Only silence specific warnings, never blanket-ignore.
 warnings.filterwarnings("ignore", category=FutureWarning)

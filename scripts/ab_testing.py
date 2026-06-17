@@ -14,19 +14,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import seaborn as sns
+from plot_style import apply_chart_style
 from scipy import stats
 
 from config import IMAGES_DIR
 
 logger = logging.getLogger("pipeline.abtest")
 
-plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "DejaVu Sans"]
-plt.rcParams["axes.unicode_minus"] = False
-sns.set_style("whitegrid")
+apply_chart_style()
 
 
 def hash_group(user_id: int, salt: str = "ab_test_v1") -> str:
-    """Hash-based random assignment — more random than odd/even parity."""
+    """Hash-based A/B assignment.
+
+    Note: ``md5 % 2`` extracts a single bit, so this is effectively a
+    parity split (50/50) keyed on the user id — the md5 hashing just spreads
+    adjacent ids across groups deterministically. That is the intended
+    behaviour for balanced A/B assignment; for a different split ratio, take
+    more bits of the hash.
+    """
     h = hashlib.md5(f"{user_id}_{salt}".encode()).hexdigest()
     return "control" if int(h, 16) % 2 == 0 else "treatment"
 
