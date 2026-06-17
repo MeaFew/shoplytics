@@ -1,8 +1,20 @@
-"""Churn prediction model.
+"""Churn prediction model (leakage-free, time-split label).
 
 Builds user-level features from raw behavior logs, fits Logistic Regression
 and XGBoost, and emits ROC / feature-importance charts. Returns model metrics
 for the pipeline summary.
+
+Label definition (decoupled from features):
+    The behavior log is split by time into two disjoint windows:
+      * Observation window  [START_DATE, CHURN_OBSERVATION_END]:
+        all features (incl. `active_days`) are computed from this window only.
+      * Prediction window   (CHURN_OBSERVATION_END, CHURN_PREDICTION_END]:
+        defines the label — a user who is active in the observation window
+        but has NO behavior in the prediction window is labelled churn=1.
+    Only users active in the observation window are modelled. Because the label
+    is derived from a future window the features cannot see, there is no
+    target leakage (a prior active_days<=N label that reused active_days as a
+    feature produced AUC=1.0).
 
 Split out of scripts/pipeline.py.
 """
@@ -17,6 +29,7 @@ import matplotlib.pyplot as plt
 import polars as pl
 import seaborn as sns
 import xgboost as xgb
+from plot_style import apply_chart_style
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -30,7 +43,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from config import (
-    CHURN_ACTIVE_DAYS_THRESHOLD,
+    CHURN_OBSERVATION_END,
+    CHURN_PREDICTION_END,
     IMAGES_DIR,
     RANDOM_SEED,
     TEST_SIZE,
@@ -38,9 +52,7 @@ from config import (
 
 logger = logging.getLogger("pipeline.churn")
 
-plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "DejaVu Sans"]
-plt.rcParams["axes.unicode_minus"] = False
-sns.set_style("whitegrid")
+apply_chart_style()
 
 FEATURES = [
     "total_pv",
@@ -58,11 +70,25 @@ FEATURES = [
 
 
 def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
-    """Build user-level features (reusable across stages)."""
-    dataset_max_date = df.select(pl.col("date").max()).item()
+    """Build user-level features and the leakage-free churn label.
+
+    Features are computed from the observation window only
+    [START_DATE, CHURN_OBSERVATION_END]. The label is derived from the
+    disjoint prediction window (CHURN_OBSERVATION_END, CHURN_PREDICTION_END]:
+    observation-active users with no behavior in the prediction window are
+    churn=1. Returns one row per user active in the observation window.
+    """
+    obs_end = datetime.strptime(CHURN_OBSERVATION_END, "%Y-%m-%d").date()
+    pred_end = datetime.strptime(CHURN_PREDICTION_END, "%Y-%m-%d").date()
+
+    obs_df = df.filter(pl.col("date") <= obs_end)
+    pred_df = df.filter((pl.col("date") > obs_end) & (pl.col("date") <= pred_end))
+
+    # Users active (modelable) in the observation window.
+    obs_users = obs_df.select("user_id").unique()
 
     user_stats = (
-        df.group_by("user_id")
+        obs_df.group_by("user_id")
         .agg(
             [
                 pl.col("behavior_type")
@@ -89,9 +115,7 @@ def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
         )
         .with_columns(
             [
-                ((dataset_max_date - pl.col("last_date")).dt.total_days()).alias(
-                    "recency_days"
-                ),
+                ((obs_end - pl.col("last_date")).dt.total_days()).alias("recency_days"),
                 (pl.col("total_buy") / (pl.col("total_pv") + 0.001)).alias(
                     "buy_conversion"
                 ),
@@ -105,11 +129,20 @@ def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
         )
     )
 
-    user_stats = user_stats.with_columns(
-        pl.when(pl.col("active_days") <= CHURN_ACTIVE_DAYS_THRESHOLD)
-        .then(1)
-        .otherwise(0)
-        .alias("churn")
+    # Label from the disjoint prediction window: churn=1 if no future behavior.
+    pred_active_users = (
+        pred_df.select("user_id").unique().with_columns(pl.lit(1).alias("_has_pred"))
+    )
+    user_stats = (
+        user_stats.join(obs_users, on="user_id", how="inner")
+        .join(pred_active_users, on="user_id", how="left")
+        .with_columns(
+            pl.when(pl.col("_has_pred").is_null())
+            .then(1)
+            .otherwise(0)
+            .alias("churn")
+        )
+        .drop("_has_pred")
     )
     return user_stats
 
