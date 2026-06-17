@@ -17,7 +17,6 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Tuple
 
 import polars as pl
 
@@ -171,19 +170,19 @@ def feature_engineering(lf: pl.LazyFrame) -> pl.LazyFrame:
     """特征工程：衍生时间特征。"""
     logger.info("开始特征工程...")
 
-    # 使用单个 with_columns 链式调用，减少执行计划节点
-    lf = lf.with_columns(
-        pl.from_epoch("timestamp", time_unit="s").dt.date().alias("date"),
-        pl.from_epoch("timestamp", time_unit="s").dt.hour().cast(pl.Int8).alias("hour"),
-        (
-            (pl.from_epoch("timestamp", time_unit="s").dt.weekday() - 1).cast(pl.Int8)
-        ).alias("day_of_week"),
-        pl.when((pl.from_epoch("timestamp", time_unit="s").dt.weekday() - 1) >= 5)
+    # Convert the epoch column ONCE to a datetime, then derive every time
+    # feature from it. Previously `pl.from_epoch("timestamp")` was recomputed
+    # 5 times across the expression below (once per derived column).
+    lf = lf.with_columns(pl.from_epoch("timestamp", time_unit="s").alias("_dt")).with_columns(
+        pl.col("_dt").dt.date().alias("date"),
+        pl.col("_dt").dt.hour().cast(pl.Int8).alias("hour"),
+        (pl.col("_dt").dt.weekday() - 1).cast(pl.Int8).alias("day_of_week"),
+        pl.when((pl.col("_dt").dt.weekday() - 1) >= 5)
         .then(1)
         .otherwise(0)
         .cast(pl.Int8)
         .alias("is_weekend"),
-    ).with_columns(
+    ).drop("_dt").with_columns(
         pl.when(pl.col("hour") < 6)
         .then(pl.lit("凌晨"))
         .when(pl.col("hour") < 12)

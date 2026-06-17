@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 benchmark_preprocessing.py
 预处理性能基准测试

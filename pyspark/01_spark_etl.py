@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 01_spark_etl.py
 PySpark ETL 数据清洗与特征工程脚本
@@ -26,24 +25,24 @@ project_root = Path(__file__).parents[1].resolve()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from config import RAW_CSV_PATH, PROCESSED_DATA_DIR
-
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col,
-    to_timestamp,
-    from_unixtime,
-    year,
-    month,
-    dayofmonth,
-    hour,
-    dayofweek,
-    when,
-    lit,
     count,
     countDistinct,
+    dayofmonth,
+    dayofweek,
+    from_unixtime,
+    hour,
+    lit,
+    month,
+    to_timestamp,
+    when,
+    year,
 )
-from pyspark.sql.types import StructType, StructField, LongType, StringType, IntegerType
+from pyspark.sql.types import IntegerType, LongType, StringType, StructField, StructType
+
+from config import PROCESSED_DATA_DIR, RAW_CSV_PATH
 
 # ---------------------------------------------------------------------------
 # 0. 路径配置
