@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 03_spark_user_profile.py
 PySpark 用户画像构建脚本
@@ -28,13 +27,18 @@ from pyspark.sql.functions import (
     col,
     count,
     countDistinct,
-    sum as spark_sum,
-    max as spark_max,
-    when,
-    lit,
-    row_number,
     datediff,
+    lit,
     ntile,
+    round,
+    row_number,
+    when,
+)
+from pyspark.sql.functions import (
+    max as spark_max,
+)
+from pyspark.sql.functions import (
+    sum as spark_sum,
 )
 from pyspark.sql.window import Window
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 02_spark_metrics.py
 PySpark 核心指标计算脚本
@@ -24,14 +23,16 @@ from pathlib import Path
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
+    avg,
     col,
     count,
     countDistinct,
-    sum as spark_sum,
-    avg,
-    round,
     lit,
+    round,
     when,
+)
+from pyspark.sql.functions import (
+    sum as spark_sum,
 )
 from pyspark.sql.window import Window
 

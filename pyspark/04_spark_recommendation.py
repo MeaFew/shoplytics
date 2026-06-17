@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 04_spark_recommendation.py
 PySpark 分布式推荐算法脚本（基于 ALS 矩阵分解）
@@ -24,18 +23,20 @@ import shutil
 import sys
 from pathlib import Path
 
+from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.ml.feature import StringIndexer
+from pyspark.ml.recommendation import ALS
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col,
     count,
-    sum as spark_sum,
     lit,
-    when,
     monotonically_increasing_id,
+    when,
 )
-from pyspark.ml.recommendation import ALS
-from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.ml.feature import StringIndexer
+from pyspark.sql.functions import (
+    sum as spark_sum,
+)
 
 # 将项目根目录加入 Python 路径，确保能导入 config.py
 project_root = Path(__file__).parents[1].resolve()
