@@ -40,24 +40,24 @@ def main():
     if CLEANED_CSV_PATH.exists():
         import polars as pl
 
-        df = pl.read_csv(CLEANED_CSV_PATH, n_rows=1)
-        n_users = df.select(pl.col("user_id").n_unique()).item()
-        n_items = df.select(pl.col("item_id").n_unique()).item()
-        n_cats = df.select(pl.col("category_id").n_unique()).item()
-
-        # Read full row count from file size
-        with open(CLEANED_CSV_PATH, encoding="utf-8") as f:
-            total_rows = sum(1 for _ in f) - 1
+        # Read the full file once for accurate cardinalities. The previous
+        # implementation read n_rows=1, which made n_unique() always return 1
+        # and reported meaningless user/item/category counts.
+        df_full = pl.read_csv(CLEANED_CSV_PATH)
+        n_users = df_full.select(pl.col("user_id").n_unique()).item()
+        n_items = df_full.select(pl.col("item_id").n_unique()).item()
+        n_cats = df_full.select(pl.col("category_id").n_unique()).item()
+        total_rows = df_full.height
 
         ok = check(
             total_rows == 29_128_402,
-            f"Total records: actual={total_rows}, expected=29,128,402",
+            f"Total records: actual={total_rows:,}, expected=29,128,402",
         )
         if ok:
             passed += 1
         else:
             failed += 1
-        print(f"  Users: {n_users}, Items: {n_items}, Categories: {n_cats}")
+        print(f"  Users: {n_users:,}, Items: {n_items:,}, Categories: {n_cats:,}")
     else:
         print(f"  SKIP: {CLEANED_CSV_PATH} not found — run preprocess first")
 

@@ -38,11 +38,27 @@ def ensure_dirs() -> None:
 # 分析参数
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
 TEST_SIZE = float(os.getenv("TEST_SIZE", "0.2"))  # 模型训练测试集比例
-CHURN_ACTIVE_DAYS_THRESHOLD = int(os.getenv("CHURN_ACTIVE_DAYS_THRESHOLD", "3"))  # 流失定义：活跃天数<=此阈值即为流失
 
 # 时间范围（数据集时间窗口）
 START_DATE = "2017-11-24"
 END_DATE = "2017-12-03"
+
+# Churn label definition (time-split, leakage-free):
+#   Features are built from behavior in the OBSERVATION window below.
+#   Label = whether the user is INACTIVE in the prediction window that follows
+#   (i.e. no behavior of any kind during the prediction window -> churn=1).
+# This decouples the label from the features: `active_days` in FEATURES refers
+# to observation-window active days only, while the label is derived from a
+# disjoint future window the features cannot see.
+# Historical note: a previous version defined churn as active_days<=N over the
+# full window with active_days also a feature, which leaked the label and
+# produced AUC=1.0. See scripts/churn_prediction.py.
+CHURN_OBSERVATION_END = os.getenv(
+    "CHURN_OBSERVATION_END", "2017-12-01"
+)  # observation window is [START_DATE, CHURN_OBSERVATION_END]
+CHURN_PREDICTION_END = os.getenv(
+    "CHURN_PREDICTION_END", END_DATE
+)  # prediction window is (CHURN_OBSERVATION_END, CHURN_PREDICTION_END]
 
 # LTV 行为权重（业务定义，可配置）
 BEHAVIOR_WEIGHTS = {
