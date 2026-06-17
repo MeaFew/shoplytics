@@ -19,15 +19,14 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import seaborn as sns
+from plot_style import apply_chart_style
 from sklearn.metrics.pairwise import cosine_similarity
 
 from config import BEHAVIOR_WEIGHTS, IMAGES_DIR
 
 logger = logging.getLogger("pipeline.recommendation")
 
-plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "DejaVu Sans"]
-plt.rcParams["axes.unicode_minus"] = False
-sns.set_style("whitegrid")
+apply_chart_style()
 
 # Cap on high-activity users used to build the CF matrix (keeps it tractable).
 TOP_USERS_LIMIT = 500

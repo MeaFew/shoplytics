@@ -7,13 +7,12 @@ In production, deploy to Prefect Cloud or a self-hosted server.
 Install: pip install prefect
 """
 
+import sys
 from datetime import datetime
 from pathlib import Path
 
-import sys
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import RAW_CSV_PATH, PROCESSED_DATA_DIR, DUCKDB_PATH
+from config import DUCKDB_PATH, PROCESSED_DATA_DIR, RAW_CSV_PATH
 
 # --- Prefect imports (install: pip install prefect) ---
 try:
@@ -142,9 +141,11 @@ if __name__ == "__main__":
         print("Running with Prefect orchestration...")
         analytics_pipeline()
     else:
+        # Without Prefect, the @task decorators above are no-ops that return the
+        # underlying functions directly, so call them as plain functions.
         print("Prefect not installed. Running tasks sequentially...")
-        print(preprocess_data.fn())
-        print(run_sql_analysis.fn())
-        print(run_dbt_models.fn())
-        print(run_modeling_pipeline.fn())
+        print(preprocess_data())
+        print(run_sql_analysis())
+        print(run_dbt_models())
+        print(run_modeling_pipeline())
         print("Done - install Prefect (pip install prefect) for full orchestration.")

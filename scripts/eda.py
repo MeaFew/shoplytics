@@ -18,15 +18,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import polars as pl
 import seaborn as sns
+from plot_style import apply_chart_style
 
 from config import CLEANED_PARQUET_PATH, IMAGES_DIR
 
 logger = logging.getLogger("pipeline.eda")
 
 # Shared chart styling (matches the original pipeline's look).
-plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "DejaVu Sans"]
-plt.rcParams["axes.unicode_minus"] = False
-sns.set_style("whitegrid")
+apply_chart_style()
 
 
 def load_data(path: Path = CLEANED_PARQUET_PATH) -> pl.DataFrame:

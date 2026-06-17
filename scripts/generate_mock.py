@@ -14,20 +14,20 @@
 """
 
 import argparse
+import os
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-import os
 
 # 添加项目根目录到 sys.path，以便导入 config 模块
 _project_root = Path(__file__).resolve().parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
-from config import RAW_CSV_PATH, RAW_DATA_DIR, START_DATE, END_DATE
+from config import END_DATE, RAW_CSV_PATH, RAW_DATA_DIR, START_DATE
 
 
 def generate_mock_data(n_records=100000, random_seed=42):

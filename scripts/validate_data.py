@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 validate_data.py
 数据质量校验脚本
