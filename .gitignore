@@ -83,6 +83,7 @@ images/*.jpg
 # dbt build artifacts
 dbt/target/
 dbt/.user.yml
+dbt/logs/
 
 # Logs
 *.log
