@@ -71,11 +71,7 @@ models/
 *.pth
 *.ckpt
 reports/*.json
-reports/*.md
-reports/*.html
 reports/checkpoints/
-images/*.png
-images/*.jpg
 !models/.gitkeep
 !reports/.gitkeep
 !images/.gitkeep
