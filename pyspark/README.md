@@ -1,6 +1,6 @@
 # PySpark 大数据处理模块
 
-本模块使用 **PySpark 3.x** 对阿里云天池电商用户行为数据集（约 1 亿条记录）进行分布式大数据处理，展示 Hadoop/Spark 生态的核心能力。适用于电商数据分析师岗位数据分析项目中的大数据实践展示。
+本模块使用 **PySpark 3.x** 对阿里云天池电商用户行为数据集（约 2,900 万条记录）进行分布式大数据处理，展示 Hadoop/Spark 生态的核心能力。适用于电商数据分析师岗位数据分析项目中的大数据实践展示。
 
 ---
 
@@ -90,7 +90,7 @@ python pyspark/04_spark_recommendation.py
 
 ### 数据回退机制
 
-若不存在完整的 `data/raw/UserBehavior.csv`（1 亿条），脚本会自动回退到同目录下的 `UserBehavior_sample.csv`（样本数据），确保代码可运行。
+若不存在完整的 `data/raw/UserBehavior.csv`（2,900 万条），脚本会自动回退到同目录下的 `UserBehavior_sample.csv`（样本数据），确保代码可运行。
 
 ---
 
@@ -160,7 +160,7 @@ python pyspark/04_spark_recommendation.py
 
 ### 1. 为什么使用 Spark？
 
-电商用户行为数据集约 **1 亿条记录**，单机 Pandas 无法承载（内存溢出、处理耗时）。Spark 的分布式 DataFrame/SQL 引擎可将计算拆分到多核/多节点，配合列式存储（Parquet）实现高效分析。
+电商用户行为数据集约 **2,900 万条记录**，单机 Pandas 无法承载（内存溢出、处理耗时）。Spark 的分布式 DataFrame/SQL 引擎可将计算拆分到多核/多节点，配合列式存储（Parquet）实现高效分析。
 
 ### 2. 性能优化措施
 
