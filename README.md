@@ -131,7 +131,7 @@ make dashboard
 | 1 | **用户留存分析** | Self-join + 窗口函数 `ROW_NUMBER` / `LAG` | D1/D3/D7 留存曲线，识别流失拐点 |
 | 2 | **转化漏斗** | CTE + 条件聚合 + 路径分类 | 四步漏斗（PV → 收藏/加购 → 购买），定位最大 leak |
 | 3 | **RFM 用户分群** | `NTILE(5)` 分箱 + 生命周期状态迁移 | 8 类用户画像（冠军/忠诚/新客/流失预警等） |
-| 4 | **A/B 测试框架** | 双比例 Z 检验 · 卡方检验 · Cohen's h · 95% CI | 完整的实验统计管线：样本量计算 → 同质性校验 → 效应量估计 |
+| 4 | **A/B 测试框架** | hash 无偏分组 · SRM 卡方校验 · 双比例 Z 检验 · 95% CI · 推荐器 lift 度量 | post-hoc holdout 设计：control 组训练推荐器 → treatment 组模拟曝光 → 对称 Z 检验 |
 | 5 | **流失预测** | XGBoost vs 逻辑回归 · 11 维特征工程 · ROC-AUC | AUC = 0.642，精准识别高风险用户 |
 | 6 | **推荐系统** | UserCF（余弦相似度）· ALS（PySpark MLlib） | 协同过滤 + 矩阵分解双方案对比 |
 | 7 | **异常检测** | 3σ 规则 + 移动平均 | 自动化日报 + 异常行为告警 |
@@ -162,10 +162,10 @@ make dashboard
 | 约 10 天有效窗口 | 无法观察月度季节性；D7+ 留存右删失 | 扩展至 ≥90 天数据，引入 Prophet / ARIMA 预测 |
 | 无金额字段 | GMV、ARPU、CLV 无法计算；RFM 退化为 RF | 关联订单/交易表，补全 monetary 维度 |
 | 无用户属性 | 缺失 demographics、设备、渠道分段 | 关联用户画像表，支持多维 cohort 分析 |
-| A/B 测试为模拟 | 基于用户 ID 哈希的随机化分组 | 哈希随机化 + SRM 校验 + CUPED 方差缩减 |
+| A/B 测试为离线模拟 | 离线行为日志无在线实验事件，用 control 组训练的 item-CF 推荐器对 treatment 组模拟曝光 | 接入真实在线实验平台（Optimizely / 内部 AB 系统）记录曝光与转化事件 |
 | 单节点执行 | DuckDB + 本地 Parquet | Hive / Spark on 分区 Parquet + Airflow 调度 |
 
-> A/B 测试框架实现了完整的统计管线（样本量计算 → 同质性校验 → 双比例 Z 检验 → Cohen's h → 95% CI）——哈希分组是真实实验元数据不可获取时的**有效**随机化策略，统计方法论可直接迁移至生产实验平台（如内部 AB 平台或 Optimizely）。
+> A/B 测试采用 **post-hoc holdout 设计**回答"推荐器是否提升转化"：用 hash 把用户无偏地劈成 control / treatment，仅在 control 组的观察窗口训练 item-CF 推荐器（模型不接触 treatment 用户），再对 treatment 组模拟推荐曝光，用对称的双比例 Z 检验比较两组的预测窗口转化率。这份数据上结果为 lift=+0.44%、p=0.43（**不显著**）——这是诚实的结论：低命中率的 item-CF 在事后模拟里几乎不产生因果效应，框架本身（SRM 校验 + 对称分母 + Z 检验）严谨可用，可整体迁移至有真实在线实验数据的场景。
 
 ---
 

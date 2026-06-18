@@ -6,7 +6,7 @@ domain stages, each of which lives in its own module:
 
   scripts/eda.py               — data load + EDA charts
   scripts/churn_prediction.py  — churn modeling (LR + XGBoost)
-  scripts/ab_testing.py        — A/B test with hash randomization
+  scripts/ab_testing.py        — A/B test: recommender lift (control-trained CF)
   scripts/recommendation.py    — CF baseline + cohort + LTV
 
 Run: ``python scripts/pipeline.py``  (entry point unchanged)
@@ -94,6 +94,7 @@ def main() -> None:
             "lr_auc": round(churn_result["lr_auc"], 4),
             "ab_test_p_value": round(ab_result["p_value"], 4),
             "ab_test_significant": ab_result["significant"],
+            "ab_test_lift_pct": round(ab_result["lift_pct"], 2),
             "srm_p_value": round(ab_result["srm_pvalue"], 4),
             "usercf_precision_at_10": round(rec_result["precision_at_k"], 4),
             "top_20_ltv_contribution_pct": round(
@@ -113,6 +114,7 @@ Key Metrics:
   XGBoost AUC:        %.4f
   Logistic Reg AUC:   %.4f
   A/B test p-value:   %.4f (%s)
+  A/B test lift:      %+.2f%%
   SRM p-value:        %.4f
   UserCF Precision@10: %.4f
   Top 20%% LTV contr:  %.1f%%
@@ -121,6 +123,7 @@ Key Metrics:
         churn_result["lr_auc"],
         ab_result["p_value"],
         "Significant" if ab_result["significant"] else "Not Significant",
+        ab_result["lift_pct"],
         ab_result["srm_pvalue"],
         rec_result["precision_at_k"],
         ltv_result["top_20_contribution_pct"],
