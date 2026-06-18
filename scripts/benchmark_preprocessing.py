@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 import polars as pl
 
-from config import PROJECT_ROOT, RAW_CSV_PATH, REPORTS_DIR
+from config import RAW_CSV_PATH, REPORTS_DIR
 
 
 def pandas_pipeline(csv_path: Path) -> dict[str, float]:

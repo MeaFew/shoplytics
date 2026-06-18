@@ -40,7 +40,7 @@ from pyspark.sql.functions import (
     when,
     year,
 )
-from pyspark.sql.types import IntegerType, LongType, StringType, StructField, StructType
+from pyspark.sql.types import LongType, StringType, StructField, StructType
 
 from config import PROCESSED_DATA_DIR, RAW_CSV_PATH
 
