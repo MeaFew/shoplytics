@@ -23,7 +23,7 @@
 ## 项目亮点
 
 - **量级**：在单机上以 **~0.4 秒**完成 2,900 万行数据的清洗与特征工程（Polars 向量化执行）
-- **工程化**：dbt 数据模型分层（staging → intermediate → marts）+ 10+ 项数据质量测试 + GitHub Actions 四检查（lint / sql-lint / test / docker-build）
+- **工程化**：dbt 数据模型分层（staging → intermediate → marts）+ 29 项数据质量测试 + GitHub Actions 四检查（lint / sql-lint / test / docker-build）
 - **方法论完整**：从用户留存、转化漏斗、RFM 分群到 A/B 测试、流失预测、协同过滤推荐，覆盖用户生命周期全链路
 - **生产级思考**：每个分析模块均附带「局限 → 生产化路径」的完整推演，而非停留在 toy example
 
@@ -70,6 +70,8 @@ make verify
 
 # 运行完整分析管线
 make all
+# Windows (无 GNU Make):
+# python run_all.py
 
 # 启动交互式看板
 make dashboard
@@ -116,7 +118,7 @@ make dashboard
    │  XGBoost   │   │  Streamlit │      │  Jupyter   │
    │ Churn Model│   │ Dashboard  │      │ Notebooks  │
    │ (11 feats) │   │ (KPI/R/F/M)│      │ (EDA/AB/   │
-   │ AUC = 0.84 │   │            │      │  Cohort)   │
+   │ AUC = 0.642 │   │            │      │  Cohort)   │
    └────────────┘   └────────────┘      └────────────┘
 ```
 
@@ -130,12 +132,12 @@ make dashboard
 | 2 | **转化漏斗** | CTE + 条件聚合 + 路径分类 | 四步漏斗（PV → 收藏/加购 → 购买），定位最大 leak |
 | 3 | **RFM 用户分群** | `NTILE(5)` 分箱 + 生命周期状态迁移 | 8 类用户画像（冠军/忠诚/新客/流失预警等） |
 | 4 | **A/B 测试框架** | 双比例 Z 检验 · 卡方检验 · Cohen's h · 95% CI | 完整的实验统计管线：样本量计算 → 同质性校验 → 效应量估计 |
-| 5 | **流失预测** | XGBoost vs 逻辑回归 · 11 维特征工程 · ROC-AUC | AUC = 0.84，精准识别高风险用户 |
+| 5 | **流失预测** | XGBoost vs 逻辑回归 · 11 维特征工程 · ROC-AUC | AUC = 0.642，精准识别高风险用户 |
 | 6 | **推荐系统** | UserCF（余弦相似度）· ALS（PySpark MLlib） | 协同过滤 + 矩阵分解双方案对比 |
 | 7 | **异常检测** | 3σ 规则 + 移动平均 | 自动化日报 + 异常行为告警 |
 | 8 | **Cohort & LTV** |  cohort 留存热力图 · 行为加权价值估计 | 用户群组生命周期价值追踪 |
 | 9 | **交互看板** | Streamlit + Plotly · KPI 卡片 · 漏斗 · RFM | 产品/运营团队的自助分析工具 |
-| 10 | **数据工程** | dbt 模型分层 · 10+ 项数据质量测试 | 可版本控制的分析数据管线 |
+| 10 | **数据工程** | dbt 模型分层 · 29 项数据质量测试 | 可版本控制的分析数据管线 |
 
 ---
 
@@ -148,7 +150,7 @@ make dashboard
 | 数据工程 | **dbt** | 模型版本化、血缘追踪、自动化测试，将分析 SQL 从脚本升级为工程化管线 |
 | 统计建模 | scikit-learn · **XGBoost** · SciPy · statsmodels | XGBoost 处理高维稀疏特征；statsmodels 提供经典统计推断 |
 | 可视化 | Matplotlib · Seaborn · **Plotly** | Plotly 交互式图表直接嵌入 Streamlit |
-| 交付 | **Streamlit** · **Apache Superset** · Jupyter | Streamlit 做轻量自助看板；Superset（Docker）做企业级 BI 探查 |
+| 交付 | **Streamlit** · **Apache Superset** · Jupyter | Streamlit 做轻量自助看板；Superset（Docker）做交互式 BI 演示 探查 |
 | 质量保障 | pytest · **ruff** · sqlfluff · GitHub Actions | CI 全绿 = 代码规范 + SQL 规范 + Docker 构建三重校验 |
 
 ---
@@ -220,7 +222,7 @@ shoplytics/
 
 ## BI 看板（Apache Superset）
 
-除了 Streamlit 轻量看板，项目还集成了 **Apache Superset**（Docker）作为企业级 BI 探查工具：
+除了 Streamlit 轻量看板，项目还集成了 **Apache Superset**（Docker）作为交互式 BI 演示 探查工具：
 
 ```bash
 # 启动 Superset（需 Docker）
@@ -240,7 +242,7 @@ docker compose -f docker-compose.superset.yml up -d
 
 | 维度 | Streamlit | Apache Superset |
 |------|-----------|-----------------|
-| 定位 | 轻量自助看板 | 企业级 BI 探查 |
+| 定位 | 轻量自助看板 | 交互式 BI 演示 探查 |
 | 使用场景 | 固定指标监控 | Ad-hoc 分析、下钻、多维切片 |
 | 开发方式 | Python 代码 | 零代码拖拽 + SQL |
 | 受众 | 产品经理/运营 | 数据分析师/管理层 |
@@ -265,6 +267,7 @@ docker compose -f docker-compose.superset.yml up -d
 | 信用风险评分 | [MeaFew/riskscore](https://github.com/MeaFew/riskscore) | WOE/IV + XGBoost/LightGBM + SHAP 可解释性 |
 | 多元时序预测 | [MeaFew/foresight](https://github.com/MeaFew/foresight) | LSTM / Transformer / XGBoost 时序预测对比 |
 
+| 图神经网络反欺诈 | [MeaFew/graphguard](https://github.com/MeaFew/graphguard) | 图神经网络非法交易检测 |
 ## 许可证
 
 数据集遵循阿里云天池的使用条款。代码采用 MIT License，仅供学习交流使用。

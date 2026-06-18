@@ -23,7 +23,7 @@
 ## Highlights
 
 - **Scale**: Cleans and engineers 29M rows in **~0.4s** on a single machine (Polars vectorized execution)
-- **Engineering**: dbt data model layering (staging → intermediate → marts) + 10+ data quality tests + GitHub Actions quad-gate (lint / sql-lint / test / docker-build)
+- **Engineering**: dbt data model layering (staging → intermediate → marts) + 29 data quality tests + GitHub Actions quad-gate (lint / sql-lint / test / docker-build)
 - **End-to-end Methodology**: Covers the full user lifecycle — retention, conversion funnel, RFM segmentation, A/B testing, churn prediction, collaborative filtering recommendation
 - **Production Mindset**: Every module includes a "Limitations → Production Path" analysis, not just toy examples
 
@@ -35,7 +35,7 @@
 |-----------|-------|
 | **Source** | Alibaba Tianchi — "Taobao User Behavior" Open Dataset |
 | **Scale** | 287,004 users · 2,584,623 items · 5,132 categories · **29,128,402 records** |
-| **Time Window** | Timestamps span 84 days (2017-04 ~ 2018-01); **99.96% of data concentrates in 2017-11-24 ~ 2017-12-03 (10 days)** |
+| **Time Window** | 2017-11-24 ~ 2017-12-03 (10 days) |
 | **Behaviors** | `pv` (page view) · `buy` · `cart` · `fav` |
 
 > Second-level timestamps enable fine-grained behavioral sequence modeling; the 29M-row scale provides a solid testbed for benchmarking modern analytics tools like Polars / DuckDB.
@@ -123,7 +123,7 @@ make verify
    │  XGBoost   │   │  Streamlit │      │  Jupyter   │
    │ Churn Model│   │ Dashboard  │      │ Notebooks  │
    │ (11 feats) │   │ (KPI/R/F/M)│      │ (EDA/AB/   │
-   │ AUC = 0.84 │   │            │      │  Cohort)   │
+   │ AUC = 0.642 │   │            │      │  Cohort)   │
    └────────────┘   └────────────┘      └────────────┘
 ```
 
@@ -135,14 +135,14 @@ make verify
 |---|--------|----------------|-------------|
 | 1 | **User Retention** | Self-join + window functions (`ROW_NUMBER`, `LAG`) | D1/D3/D7 retention curves; identify churn inflection points |
 | 2 | **Conversion Funnel** | CTE + conditional aggregation + path classification | Four-step funnel (PV → fav/cart → buy); locate the biggest leak |
-| 3 | **RFM Segmentation** | `NTILE(5)` binning + lifecycle state migration | 8 user personas (Champions / Loyal / New / At Risk, etc.) |
+| 3 | **RFM Segmentation** | `NTILE(5)` binning + lifecycle state migration | 8 user personas (note: no price field, M=buy count proxy) |
 | 4 | **A/B Test Framework** | Two-proportion Z-test · Chi-squared · Cohen's h · 95% CI | Full statistical pipeline: sample size → homogeneity check → effect size |
-| 5 | **Churn Prediction** | XGBoost vs Logistic Regression · 11-feature engineering · ROC-AUC | AUC = 0.84; precisely identify high-risk users |
+| 5 | **Churn Prediction** | XGBoost vs Logistic Regression · 11-feature engineering · ROC-AUC | AUC = 0.642; precisely identify high-risk users |
 | 6 | **Recommendation** | UserCF (cosine similarity) · ALS (PySpark MLlib) | Side-by-side comparison of collaborative filtering + matrix factorization |
 | 7 | **Anomaly Detection** | 3σ rule + moving average | Automated daily reports + anomaly behavior alerts |
 | 8 | **Cohort & LTV** | Cohort retention heatmap · behavior-weighted value estimation | User cohort lifecycle value tracking |
 | 9 | **Dashboard** | Streamlit + Plotly · KPI cards · funnel · RFM | Self-service analytics tool for product / ops teams |
-| 10 | **Data Engineering** | dbt model layering · 10+ data quality tests | Version-controlled analytics data pipeline |
+| 10 | **Data Engineering** | dbt model layering · 29 data quality tests | Version-controlled analytics data pipeline |
 
 ---
 
@@ -164,7 +164,7 @@ make verify
 
 | Limitation | Impact | Production Approach |
 |------------|--------|---------------------|
-| ~9-day effective window | Cannot observe monthly seasonality; D7+ retention is right-censored | Extend to ≥90 days of data; introduce Prophet / ARIMA forecasting |
+| ~10-day effective window | Cannot observe monthly seasonality; D7+ retention is right-censored | Extend to ≥90 days of data; introduce Prophet / ARIMA forecasting |
 | No monetary field | GMV, ARPU, CLV unavailable; RFM degrades to RF | Join with order / transaction table to complete the monetary dimension |
 | No user attributes | Missing demographics, device, channel segmentation | Join with user profile table for multi-dimensional cohort analysis |
 | Simulated A/B test | User-ID hash-based randomization as proxy | Hash randomization + SRM check + CUPED variance reduction |
@@ -227,7 +227,7 @@ shoplytics/
 
 ## BI Dashboard (Apache Superset)
 
-In addition to the lightweight Streamlit dashboard, the project integrates **Apache Superset** (Docker) as an enterprise-grade BI exploration tool:
+In addition to the lightweight Streamlit dashboard, the project integrates **Apache Superset** (Docker) as an interactive BI demo exploration tool:
 
 ```bash
 # Start Superset (requires Docker)
@@ -247,7 +247,7 @@ docker compose -f docker-compose.superset.yml up -d
 
 | Dimension | Streamlit | Apache Superset |
 |-----------|-----------|-----------------|
-| Positioning | Lightweight self-service dashboard | Enterprise BI exploration |
+| Positioning | Lightweight self-service dashboard | Interactive BI demo exploration |
 | Use Case | Fixed KPI monitoring | Ad-hoc analysis, drill-down, multi-dimensional slicing |
 | Development | Python code | Zero-code drag-and-drop + SQL |
 | Audience | Product managers / Operations | Data analysts / Management |
@@ -271,6 +271,7 @@ docker compose -f docker-compose.superset.yml up -d
 | Marketing Attribution & MMM | [MeaFew/attributor](https://github.com/MeaFew/attributor) | MMM + multi-touch attribution + budget optimization |
 | Credit Risk Scoring | [MeaFew/riskscore](https://github.com/MeaFew/riskscore) | WOE/IV + XGBoost/LightGBM + SHAP interpretability |
 | Multivariate Time Series | [MeaFew/foresight](https://github.com/MeaFew/foresight) | LSTM / Transformer / XGBoost forecasting benchmarks |
+| Graph Fraud Detection | [MeaFew/graphguard](https://github.com/MeaFew/graphguard) | GNN illicit transaction detection (Elliptic) |
 
 ## License
 

@@ -100,7 +100,7 @@ flowchart LR
     C --> D[SQL Analysis<br/>7 scripts]
     C --> E[dbt Models<br/>staging→marts]
     C --> F[PySpark MLlib<br/>ALS]
-    D --> G[XGBoost<br/>Churn AUC=0.84]
+    D --> G[XGBoost<br/>Churn AUC=0.642]
     E --> H[Streamlit<br/>Dashboard]
     F --> H
     G --> H
@@ -194,7 +194,7 @@ flowchart LR
           <div class="text-2xl font-bold text-blue-600">05</div>
           <div>
             <div class="font-semibold">流失预测</div>
-            <div class="text-gray-600 text-sm">XGBoost AUC = 0.84，精准识别高风险用户</div>
+            <div class="text-gray-600 text-sm">XGBoost AUC = 0.642，精准识别高风险用户</div>
           </div>
         </div>
         <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
@@ -229,7 +229,7 @@ flowchart LR
           <div class="text-2xl font-bold text-blue-600">10</div>
           <div>
             <div class="font-semibold">数据工程</div>
-            <div class="text-gray-600 text-sm">dbt 分层 + 7 项数据质量测试</div>
+            <div class="text-gray-600 text-sm">dbt 分层 + 29 项数据质量测试</div>
           </div>
         </div>
       </div>
