@@ -14,7 +14,7 @@ Run: ``python scripts/pipeline.py``  (entry point unchanged)
 Improvements retained from the original pipeline:
 1. No hardcoded paths — everything reads from config.py
 2. Parquet as source (typed, fast)
-3. Hash-based A/B randomization (not parity)
+3. Hash-based A/B randomization (md5 parity split)
 4. logging instead of print
 5. Exception handling & input validation
 6. Optional SHAP explanation for churn

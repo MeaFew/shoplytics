@@ -19,7 +19,6 @@ PySpark 用户画像构建脚本
 import os
 import shutil
 import sys
-from datetime import datetime
 from pathlib import Path
 
 from pyspark.sql import SparkSession

@@ -29,9 +29,7 @@ from pyspark.ml.recommendation import ALS
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col,
-    count,
     lit,
-    monotonically_increasing_id,
     when,
 )
 from pyspark.sql.functions import (
@@ -220,7 +218,7 @@ def main():
     user_recs = user_recs.join(user_id_map, on="user_idx", how="inner")
 
     # 展开推荐列表，反查原始 item_id
-    from pyspark.sql.functions import explode, struct
+    from pyspark.sql.functions import explode
 
     user_recs_exploded = (
         user_recs.withColumn("rec", explode(col("recommendations")))

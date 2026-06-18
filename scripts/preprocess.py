@@ -23,10 +23,8 @@ import polars as pl
 from config import (
     CLEANED_CSV_PATH,
     CLEANED_PARQUET_PATH,
-    END_DATE,
     PROCESSED_DATA_DIR,
     RAW_CSV_PATH,
-    START_DATE,
     ensure_dirs,
 )
 

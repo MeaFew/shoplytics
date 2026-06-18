@@ -13,7 +13,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-import seaborn as sns
 from plot_style import apply_chart_style
 from scipy import stats
 
