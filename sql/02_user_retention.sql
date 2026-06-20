@@ -156,29 +156,41 @@ user_active_dates AS (
     SELECT DISTINCT user_id, date AS active_date
     FROM user_behavior
 ),
+-- Anchor cohort size per first_date INDEPENDENTLY. Earlier the retention_trend
+-- CTE computed cohort_size inside the same LEFT JOIN that produced retained
+-- counts, which made retained_users == cohort_size for every (first_date,
+-- day_diff) row (only retained users generate non-NULL join rows), so the
+-- reported retention_rate was always 100%. Cohort size now comes from a
+-- separate CTE so the denominator is the full first-day cohort.
+cohort_sizes AS (
+    SELECT first_date, COUNT(DISTINCT user_id) AS cohort_size
+    FROM user_first_active
+    GROUP BY first_date
+),
 retention_trend AS (
-    SELECT 
+    SELECT
         f.first_date,
         DATE_DIFF('day', f.first_date, a.active_date) AS day_diff,
-        COUNT(DISTINCT f.user_id) AS cohort_size,
-        COUNT(DISTINCT CASE WHEN a.active_date IS NOT NULL THEN f.user_id END) AS retained_users
+        cs.cohort_size,
+        COUNT(DISTINCT f.user_id) AS retained_users
     FROM user_first_active f
-    LEFT JOIN user_active_dates a 
+    JOIN cohort_sizes cs ON cs.first_date = f.first_date
+    LEFT JOIN user_active_dates a
         ON f.user_id = a.user_id
        AND a.active_date > f.first_date
-    GROUP BY f.first_date, day_diff
+    GROUP BY f.first_date, day_diff, cs.cohort_size
 )
-SELECT 
+SELECT
     first_date,
     cohort_size,
-    -- 使用 LAG 窗口函数获取前一天的留存率，计算留存率变化趋势
+    -- retention_rate now uses the anchored full-cohort denominator.
     ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2) AS retention_rate,
     day_diff AS retention_day,
-    LAG(ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2), 1) 
+    LAG(ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2), 1)
         OVER (PARTITION BY day_diff ORDER BY first_date) AS prev_rate,
     ROUND(
-        CAST(retained_users AS REAL) * 100 / cohort_size 
-        - LAG(ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2), 1) 
+        CAST(retained_users AS REAL) * 100 / cohort_size
+        - LAG(ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2), 1)
             OVER (PARTITION BY day_diff ORDER BY first_date),
         2
     ) AS rate_change

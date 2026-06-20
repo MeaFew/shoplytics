@@ -31,9 +31,12 @@ rfm_scored AS (
         recency_days,
         frequency,
         monetary,
-        NTILE(5) OVER (ORDER BY recency_days ASC) AS r_score,      -- Recency 越小越好
-        NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,       -- Frequency 越大越好
-        NTILE(5) OVER (ORDER BY monetary DESC) AS m_score         -- Monetary 越大越好
+        -- 三列均用 (6 - NTILE) 使"最优"得 5 分：
+        --   Recency 越小越好 -> ASC，最小 recency 进第 1 组 -> 6-1=5
+        --   Frequency/Monetary 越大越好 -> DESC，最大值进第 1 组 -> 6-1=5
+        6 - NTILE(5) OVER (ORDER BY recency_days ASC) AS r_score,
+        6 - NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+        6 - NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
     FROM rfm_base
 ),
 

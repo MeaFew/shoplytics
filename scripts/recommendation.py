@@ -48,8 +48,12 @@ def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
             (pl.col("behavior_type") == "buy")
             & (pl.col("user_id").is_in(top_users["user_id"]))
         )
-        .select(["user_id", "item_id"])
+        # carry date so leave-one-out can hold out the CHRONOLOGICALLY LAST
+        # purchase per user, not the highest item_id (earlier the held-out item
+        # was the max item_id, a non-temporal holdout).
+        .select(["user_id", "item_id", "date"])
         .unique()
+        .sort(["user_id", "date", "item_id"])
         .to_pandas()
     )
 
@@ -58,10 +62,13 @@ def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
     user_idx = {u: i for i, u in enumerate(user_list)}
     item_idx = {it: i for i, it in enumerate(item_list)}
 
-    matrix = np.zeros((len(user_list), len(item_list)))
-    for _, row in buy_data.iterrows():
-        if row["user_id"] in user_idx and row["item_id"] in item_idx:
-            matrix[user_idx[row["user_id"]], item_idx[row["item_id"]]] = 1
+    # Build the user×item interaction matrix with VECTORIZED assignment instead
+    # of a per-row Python loop (the loop over up to hundreds of thousands of
+    # rows was the slowest part of the CF build).
+    rows = buy_data["user_id"].map(user_idx).to_numpy()
+    cols = buy_data["item_id"].map(item_idx).to_numpy()
+    matrix = np.zeros((len(user_list), len(item_list)), dtype=np.float64)
+    matrix[rows, cols] = 1
 
     logger.info(
         "Matrix: %d users × %d items, sparsity: %.1f%%",
@@ -70,6 +77,13 @@ def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
         (1 - matrix.sum() / matrix.size) * 100,
     )
 
+    # Per-user chronologically-LAST purchased item (for temporal leave-one-out).
+    # buy_data is already sorted by (user_id, date, item_id), so the last row
+    # per user is their most recent purchase. Holding this out mirrors a real
+    # "predict the user's next purchase" task; earlier code held out the
+    # highest item_id instead, which is non-temporal and item_id-correlated.
+    last_purchase = buy_data.groupby("user_id")["item_id"].last()
+
     # Leave-one-out evaluation
     hits = 0
     total_eval = 0
@@ -77,23 +91,26 @@ def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
     for i in range(test_users):
         u = user_list[i]
         ui = user_idx[u]
-        user_items = [it for it, idx in item_idx.items() if matrix[ui, idx] == 1]
-        if len(user_items) < 2:
+        # Items this user bought (column indices)
+        user_cols = np.flatnonzero(matrix[ui])
+        if len(user_cols) < 2:
             continue
-        hidden = user_items[-1]
-        train_items = user_items[:-1]
-        train_vec = np.zeros(len(item_list))
-        for it in train_items:
-            if it in item_idx:
-                train_vec[item_idx[it]] = 1
+        hidden = last_purchase.get(u)
+        if hidden is None or hidden not in item_idx:
+            continue
+        hidden_idx = item_idx[hidden]
+
+        # Train vector = user's row with the held-out item removed.
+        train_vec = matrix[ui].copy()
+        train_vec[hidden_idx] = 0
+        train_items = {item_list[c] for c in np.flatnonzero(train_vec)}
 
         sims = cosine_similarity([train_vec], matrix)[0]
         rec_idx = np.argsort(sims)[::-1]
-        bought_set = set(train_items)
         recs = []
         for idx in rec_idx:
             it = item_list[idx]
-            if it not in bought_set and it != hidden:
+            if it not in train_items and it != hidden:
                 recs.append(it)
             if len(recs) >= k:
                 break
