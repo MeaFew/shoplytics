@@ -101,15 +101,9 @@ def main():
     df_user_stats = df.groupBy("user_id").agg(
         count("*").alias("total_actions"),
         spark_sum(when(col("behavior_type") == "pv", 1).otherwise(0)).alias("pv_count"),
-        spark_sum(when(col("behavior_type") == "buy", 1).otherwise(0)).alias(
-            "buy_count"
-        ),
-        spark_sum(when(col("behavior_type") == "cart", 1).otherwise(0)).alias(
-            "cart_count"
-        ),
-        spark_sum(when(col("behavior_type") == "fav", 1).otherwise(0)).alias(
-            "fav_count"
-        ),
+        spark_sum(when(col("behavior_type") == "buy", 1).otherwise(0)).alias("buy_count"),
+        spark_sum(when(col("behavior_type") == "cart", 1).otherwise(0)).alias("cart_count"),
+        spark_sum(when(col("behavior_type") == "fav", 1).otherwise(0)).alias("fav_count"),
         spark_max("date").alias("last_active_date"),  # 最近一次行为日期
         countDistinct("item_id").alias("unique_items"),  # 交互过的商品数
         countDistinct("category_id").alias("unique_categories"),  # 交互过的类目数
@@ -182,16 +176,13 @@ def main():
     df_profile = df_profile.withColumn(
         "user_label",
         when(
-            (col("action_decile") >= 8)
-            & (col("buy_count") > 0)
-            & (col("recency_days") <= 3),
+            (col("action_decile") >= 8) & (col("buy_count") > 0) & (col("recency_days") <= 3),
             lit("高活跃"),
         )
         .when((col("action_decile") >= 5) & (col("recency_days") <= 7), lit("一般"))
         .when((col("recency_days") > 7) & (col("recency_days") <= 30), lit("沉睡"))
         .when(
-            (col("recency_days") > 30)
-            | ((col("action_decile") <= 2) & (col("recency_days") > 7)),
+            (col("recency_days") > 30) | ((col("action_decile") <= 2) & (col("recency_days") > 7)),
             lit("流失"),
         )
         .otherwise(lit("一般")),
@@ -200,15 +191,11 @@ def main():
     # 计算购买转化率
     df_profile = df_profile.withColumn(
         "buy_conversion_rate",
-        when(
-            col("pv_count") > 0, round(col("buy_count") / col("pv_count"), 4)
-        ).otherwise(lit(0.0)),
+        when(col("pv_count") > 0, round(col("buy_count") / col("pv_count"), 4)).otherwise(lit(0.0)),
     )
 
     print("[INFO] 用户画像标签分布:")
-    df_profile.groupBy("user_label").count().orderBy(col("count").desc()).show(
-        truncate=False
-    )
+    df_profile.groupBy("user_label").count().orderBy(col("count").desc()).show(truncate=False)
 
     print("[INFO] 用户画像完整预览:")
     df_profile.select(
@@ -235,9 +222,7 @@ def main():
     os.makedirs(OUTPUT_PATH, exist_ok=True)
 
     # 保存为 Parquet（列式存储，适合后续机器学习读取）
-    df_profile.write.mode("overwrite").parquet(
-        os.path.join(OUTPUT_PATH, "user_profile.parquet")
-    )
+    df_profile.write.mode("overwrite").parquet(os.path.join(OUTPUT_PATH, "user_profile.parquet"))
 
     # 保存为 CSV（便于人工查看）
     df_profile.coalesce(1).write.mode("overwrite").option("header", "true").csv(

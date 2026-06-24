@@ -50,9 +50,7 @@ def validate(path: Path) -> list[str]:
 
     try:
         df = pl.read_csv(path)
-    except (
-        Exception
-    ) as exc:  # pragma: no cover - broad on purpose for robust validation
+    except Exception as exc:  # pragma: no cover - broad on purpose for robust validation
         errors.append(f"无法读取 CSV: {exc}")
         return errors
 
@@ -74,9 +72,7 @@ def validate(path: Path) -> list[str]:
             # 允许整数类型的互相兼容
             if expected_dtype == pl.Int64 and "Int" in str(actual):
                 continue
-            errors.append(
-                f"列 '{col_name}' 类型不匹配: 期望 {expected_dtype}, 实际 {actual}"
-            )
+            errors.append(f"列 '{col_name}' 类型不匹配: 期望 {expected_dtype}, 实际 {actual}")
 
     # 3. 空值校验
     for col_name in EXPECTED_COLUMNS:
@@ -120,12 +116,8 @@ def validate(path: Path) -> list[str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Validate processed user behavior dataset"
-    )
-    parser.add_argument(
-        "--path", type=Path, default=CLEANED_CSV_PATH, help="Path to cleaned CSV"
-    )
+    parser = argparse.ArgumentParser(description="Validate processed user behavior dataset")
+    parser.add_argument("--path", type=Path, default=CLEANED_CSV_PATH, help="Path to cleaned CSV")
     args = parser.parse_args()
 
     print(f"正在校验: {args.path}\n")

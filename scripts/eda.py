@@ -86,10 +86,7 @@ def run_eda(df: pl.DataFrame) -> dict:
 
     # 2. DAU trend
     daily = (
-        df.group_by("date")
-        .agg(pl.col("user_id").n_unique().alias("dau"))
-        .sort("date")
-        .to_pandas()
+        df.group_by("date").agg(pl.col("user_id").n_unique().alias("dau")).sort("date").to_pandas()
     )
     fig, ax = plt.subplots(figsize=(12, 5))
     ax.plot(range(len(daily)), daily["dau"], marker="o", linewidth=2, color="#2E86AB")
@@ -132,19 +129,13 @@ def run_eda(df: pl.DataFrame) -> dict:
     logger.info("  ✓ 01_hourly_v2.png")
 
     # 4. Heatmap (hour x weekday)
-    pivot = (
-        df.group_by(["day_of_week", "hour"]).agg(pl.len().alias("count")).to_pandas()
-    )
-    pivot_table = pivot.pivot(
-        index="day_of_week", columns="hour", values="count"
-    ).fillna(0)
+    pivot = df.group_by(["day_of_week", "hour"]).agg(pl.len().alias("count")).to_pandas()
+    pivot_table = pivot.pivot(index="day_of_week", columns="hour", values="count").fillna(0)
     weekday_map = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
     pivot_table.index = [weekday_map.get(i, str(i)) for i in pivot_table.index]
     fig, ax = plt.subplots(figsize=(14, 5))
     sns.heatmap(pivot_table, cmap="YlOrRd", linewidths=0.5, ax=ax)
-    ax.set_title(
-        "User Activity Heatmap (Hour × Weekday)", fontsize=14, fontweight="bold"
-    )
+    ax.set_title("User Activity Heatmap (Hour × Weekday)", fontsize=14, fontweight="bold")
     plt.tight_layout()
     plt.savefig(f"{IMAGES_DIR}/01_heatmap.png", dpi=150)
     plt.close()
@@ -157,9 +148,7 @@ def run_eda(df: pl.DataFrame) -> dict:
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.bar(wend["label"], wend["count"], color=["#2E86AB", "#F18F01"])
     for i, v in enumerate(wend["count"]):
-        ax.text(
-            i, v + max(wend["count"]) * 0.01, f"{v:,}", ha="center", fontweight="bold"
-        )
+        ax.text(i, v + max(wend["count"]) * 0.01, f"{v:,}", ha="center", fontweight="bold")
     ax.set_title("Weekend vs Weekday Activity", fontsize=14, fontweight="bold")
     plt.tight_layout()
     plt.savefig(f"{IMAGES_DIR}/01_weekend.png", dpi=150)

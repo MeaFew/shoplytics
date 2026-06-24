@@ -116,15 +116,9 @@ def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
         .with_columns(
             [
                 ((obs_end - pl.col("last_date")).dt.total_days()).alias("recency_days"),
-                (pl.col("total_buy") / (pl.col("total_pv") + 0.001)).alias(
-                    "buy_conversion"
-                ),
-                (pl.col("total_cart") / (pl.col("total_pv") + 0.001)).alias(
-                    "cart_conversion"
-                ),
-                (pl.col("total_fav") / (pl.col("total_pv") + 0.001)).alias(
-                    "fav_conversion"
-                ),
+                (pl.col("total_buy") / (pl.col("total_pv") + 0.001)).alias("buy_conversion"),
+                (pl.col("total_cart") / (pl.col("total_pv") + 0.001)).alias("cart_conversion"),
+                (pl.col("total_fav") / (pl.col("total_pv") + 0.001)).alias("fav_conversion"),
             ]
         )
     )
@@ -136,12 +130,7 @@ def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
     user_stats = (
         user_stats.join(obs_users, on="user_id", how="inner")
         .join(pred_active_users, on="user_id", how="left")
-        .with_columns(
-            pl.when(pl.col("_has_pred").is_null())
-            .then(1)
-            .otherwise(0)
-            .alias("churn")
-        )
+        .with_columns(pl.when(pl.col("_has_pred").is_null()).then(1).otherwise(0).alias("churn"))
         .drop("_has_pred")
     )
     return user_stats
@@ -152,9 +141,18 @@ def run_churn_prediction(df: pl.DataFrame) -> dict:
     t1 = datetime.now()
     user_stats = build_user_features(df)
 
+    # NOTE: modeling is run on a random sample of up to 100k users for speed
+    # (the full user base is ~287k). The sample is drawn before the time-based
+    # split, so both train and test come from the same sampled population; the
+    # AUC is therefore an estimate on the sample, not the full cohort. Increase
+    # or remove the cap for a full-population estimate.
     sample_size = min(100_000, user_stats.height)
     if sample_size < user_stats.height:
-        logger.info("数据量较大，采样 %s 用户进行建模", f"{sample_size:,}")
+        logger.info(
+            "数据量较大，采样 %s / %s 用户进行建模（提升速度；完整人群可调大上限）",
+            f"{sample_size:,}",
+            f"{user_stats.height:,}",
+        )
         user_pd = user_stats.sample(n=sample_size, seed=RANDOM_SEED).to_pandas()
     else:
         user_pd = user_stats.to_pandas()
@@ -169,9 +167,44 @@ def run_churn_prediction(df: pl.DataFrame) -> dict:
     y = user_pd["churn"]
     logger.info("Churn rate: %.1f%%", y.mean() * 100)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=TEST_SIZE, random_state=RANDOM_SEED, stratify=y
-    )
+    # Time-based split: train on users whose LAST activity was earlier, test on
+    # later users. A random shuffle split would let users with adjacent activity
+    # dates land in different splits and give an optimistic AUC vs. a true
+    # temporal holdout (churn is time-dependent). We split on the last-activity
+    # date quantile so the test set is the chronologically-later ~TEST_SIZE
+    # fraction — a deployable estimate rather than an in-sample one.
+    split_col = "last_active_date" if "last_active_date" in user_pd.columns else "last_date"
+    if split_col in user_pd.columns:
+        split_point = user_pd[split_col].quantile(1 - TEST_SIZE)
+        test_mask = user_pd[split_col] >= split_point
+        # Fallback if the quantile is too coarse (many ties on common dates).
+        if test_mask.mean() < TEST_SIZE * 0.5 or test_mask.mean() > TEST_SIZE * 2:
+            logger.warning(
+                "%s quantile produced an imbalanced split (test=%.1f%%); "
+                "falling back to a date-sorted positional split.",
+                split_col,
+                test_mask.mean() * 100,
+            )
+            order = user_pd[split_col].sort_values().index
+            n_test = int(len(user_pd) * TEST_SIZE)
+            test_idx = set(order[-n_test:])
+            test_mask = user_pd.index.isin(test_idx)
+        logger.info(
+            "Time-based churn split on %s: train=%d, test=%d (test = later-active users)",
+            split_col,
+            (~test_mask).sum(),
+            test_mask.sum(),
+        )
+        X_train, X_test = X[~test_mask], X[test_mask]
+        y_train, y_test = y[~test_mask], y[test_mask]
+    else:
+        logger.warning(
+            "last-activity date unavailable; falling back to stratified random "
+            "split (not a deployable temporal estimate)."
+        )
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=TEST_SIZE, random_state=RANDOM_SEED, stratify=y
+        )
 
     # Logistic Regression
     scaler = StandardScaler()
@@ -220,9 +253,7 @@ def run_churn_prediction(df: pl.DataFrame) -> dict:
     fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
     fpr_xgb, tpr_xgb, _ = roc_curve(y_test, y_prob_xgb)
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(
-        fpr_lr, tpr_lr, label=f"Logistic Regression (AUC={lr_auc:.4f})", linewidth=2
-    )
+    ax.plot(fpr_lr, tpr_lr, label=f"Logistic Regression (AUC={lr_auc:.4f})", linewidth=2)
     ax.plot(fpr_xgb, tpr_xgb, label=f"XGBoost (AUC={xgb_auc:.4f})", linewidth=2)
     ax.plot([0, 1], [0, 1], "k--", label="Random")
     ax.set_xlabel("False Positive Rate")

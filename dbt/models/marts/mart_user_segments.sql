@@ -51,7 +51,12 @@ rfm_base AS (
     FROM user_behavior_summary
 ),
 
--- RFM分位数（1-5分）
+-- RFM分位数（1-5分，5=最优）。NTILE 把排序后第一组编号为 1，所以为了让
+-- "最优"得 5 分，三列都用 (6 - NTILE)：
+--   Recency  越小越好 -> ORDER BY recency ASC，最小 recency 进第 1 组 -> 6-1=5
+--   Frequency 越大越好 -> ORDER BY frequency DESC，最大 frequency 进第 1 组 -> 6-1=5
+--   Monetary  越大越好 -> ORDER BY monetary DESC，最大 monetary 进第 1 组 -> 6-1=5
+-- 方向与 mart_rfm_segments / sql/04_rfm_model.sql 完全一致。
 rfm_scores AS (
     SELECT
         user_id,
@@ -65,12 +70,9 @@ rfm_scores AS (
         fav_count,
         unique_items,
         unique_categories,
-        -- Recency分数：越小越好（最近活跃分数高）
-        NTILE(5) OVER (ORDER BY recency DESC) AS r_score,
-        -- Frequency分数
-        NTILE(5) OVER (ORDER BY frequency ASC) AS f_score,
-        -- Monetary分数
-        NTILE(5) OVER (ORDER BY monetary ASC) AS m_score
+        6 - NTILE(5) OVER (ORDER BY recency ASC) AS r_score,
+        6 - NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+        6 - NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
     FROM rfm_base
 ),
 

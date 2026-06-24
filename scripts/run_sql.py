@@ -120,9 +120,7 @@ def run_sql_scripts(db_path: Path) -> None:
         for stmt in statements:
             # 跳过以 -- 开头的注释块
             lines = [
-                ln
-                for ln in stmt.splitlines()
-                if ln.strip() and not ln.strip().startswith("--")
+                ln for ln in stmt.splitlines() if ln.strip() and not ln.strip().startswith("--")
             ]
             if not lines:
                 continue
@@ -140,9 +138,7 @@ def run_sql_scripts(db_path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="批量执行 SQL 脚本到 DuckDB")
-    parser.add_argument(
-        "--db", type=Path, default=DUCKDB_PATH, help="DuckDB 数据库路径"
-    )
+    parser.add_argument("--db", type=Path, default=DUCKDB_PATH, help="DuckDB 数据库路径")
     args = parser.parse_args()
     run_sql_scripts(args.db)
 

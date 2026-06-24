@@ -88,9 +88,7 @@ def generate_mock_data(n_records=100000, random_seed=42):
         # 随机选择天数
         day_offset = np.random.randint(0, num_days)
 
-        ts = int(
-            (start_time + timedelta(days=day_offset, seconds=second_of_day)).timestamp()
-        )
+        ts = int((start_time + timedelta(days=day_offset, seconds=second_of_day)).timestamp())
         timestamps.append(ts)
 
     # 构建DataFrame
@@ -112,9 +110,7 @@ def generate_mock_data(n_records=100000, random_seed=42):
 
 def main():
     parser = argparse.ArgumentParser(description="生成模拟电商用户行为数据")
-    parser.add_argument(
-        "--output", type=str, default=str(RAW_CSV_PATH), help="输出文件路径"
-    )
+    parser.add_argument("--output", type=str, default=str(RAW_CSV_PATH), help="输出文件路径")
     parser.add_argument(
         "--n_records", type=int, default=100000, help="生成的记录数量（默认10万条）"
     )

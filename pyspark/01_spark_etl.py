@@ -62,9 +62,7 @@ def main():
         .master("local[*]")  # 本地模式，使用所有 CPU 核心
         .config("spark.sql.adaptive.enabled", "true")  # AQE 自适应查询执行
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
-        .config(
-            "spark.serializer", "org.apache.spark.serializer.KryoSerializer"
-        )  # Kryo 序列化
+        .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")  # Kryo 序列化
         .config("spark.sql.parquet.compression.codec", "snappy")
         .getOrCreate()
     )
@@ -122,15 +120,11 @@ def main():
             & (col("behavior_type").isin(valid_behaviors))
         )
         # 4.2 去重：基于全部字段去重，避免重复记录干扰指标计算
-        .dropDuplicates(
-            ["user_id", "item_id", "category_id", "behavior_type", "timestamp"]
-        )
+        .dropDuplicates(["user_id", "item_id", "category_id", "behavior_type", "timestamp"])
     )
 
     # 4.3 类型转换：timestamp 从 Unix 秒级转为 Timestamp 类型
-    df_cleaned = df_cleaned.withColumn(
-        "event_time", to_timestamp(from_unixtime(col("timestamp")))
-    )
+    df_cleaned = df_cleaned.withColumn("event_time", to_timestamp(from_unixtime(col("timestamp"))))
 
     print(f"[INFO] 清洗后数据行数: {df_cleaned.count():,}")
 
@@ -151,9 +145,7 @@ def main():
         # Spark dayofweek() 返回 1=周日, 7=周六; 减去2并取模转换为 0=周一
         .withColumn("day_of_week", ((dayofweek(col("event_time")) - 2) % 7).cast("int"))
         # 是否周末：周六(5) 或 周日(6)
-        .withColumn(
-            "is_weekend", when(col("day_of_week") >= 5, lit(1)).otherwise(lit(0))
-        )
+        .withColumn("is_weekend", when(col("day_of_week") >= 5, lit(1)).otherwise(lit(0)))
         # 行为类型数值化（便于后续机器学习使用）
         .withColumn(
             "behavior_score",
@@ -176,9 +168,7 @@ def main():
     df_select.show(5, truncate=False)
 
     # 6.2 filter：条件过滤
-    df_filter = df_featured.filter(
-        (col("behavior_type") == "buy") & (col("is_weekend") == 1)
-    )
+    df_filter = df_featured.filter((col("behavior_type") == "buy") & (col("is_weekend") == 1))
     print(f"[DEMO] filter 结果 - 周末购买行为数: {df_filter.count():,}")
 
     # 6.3 groupBy + agg：分组聚合
