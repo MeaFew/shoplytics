@@ -18,6 +18,7 @@ WITH item_buy_stats AS (
     FROM user_behavior
     GROUP BY item_id, category_id
 )
+
 SELECT 
     item_id,
     category_id,
@@ -49,6 +50,7 @@ WITH category_stats AS (
     FROM user_behavior
     GROUP BY category_id
 )
+
 SELECT 
     category_id,
     pv_count,
@@ -86,6 +88,7 @@ WITH item_conversion AS (
     -- 过滤：至少有一定点击量才统计转化率（避免1次点击1次购买的极端值）
     HAVING SUM(CASE WHEN behavior_type = 'pv' THEN 1 ELSE 0 END) >= 50
 )
+
 SELECT 
     item_id,
     category_id,
@@ -116,15 +119,18 @@ WITH item_stats AS (
     FROM user_behavior
     GROUP BY item_id, category_id
 ),
+
 -- 计算全局均值用于定义"高点击"和"低购买"
 global_stats AS (
     SELECT 
         AVG(pv_count) AS avg_pv,
         AVG(buy_count) AS avg_buy,
         -- 使用窗口函数计算中位数近似值（通过排序取中间值）
-        (SELECT pv_count FROM (SELECT pv_count FROM item_stats ORDER BY pv_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM item_stats) / 2)) AS median_pv
+        (SELECT pv_count FROM (SELECT pv_count FROM item_stats
+ORDER BY pv_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM item_stats) / 2)) AS median_pv
     FROM item_stats
 )
+
 SELECT 
     s.item_id,
     s.category_id,
@@ -151,8 +157,8 @@ SELECT
         WHEN s.cart_count + s.fav_count > 0 AND s.buy_count = 0 THEN '有意愿无转化'
         ELSE '已转化或无意愿'
     END AS intent_no_convert
-FROM item_stats s
-CROSS JOIN global_stats g
+FROM item_stats AS s
+CROSS JOIN global_stats AS g
 WHERE s.pv_count > g.median_pv  -- 只关注有一定流量的商品
 ORDER BY s.pv_count DESC, conversion_rate ASC
 LIMIT 30;
@@ -173,19 +179,20 @@ WITH category_conversion AS (
     GROUP BY category_id
     HAVING SUM(CASE WHEN behavior_type = 'pv' THEN 1 ELSE 0 END) >= 100  -- 过滤低流量类目
 ),
+
 -- 计算全局平均转化率作为基准
 global_avg AS (
-    SELECT 
-        SUM(buy_count) * 1.0 / SUM(pv_count) AS overall_conversion_rate
+    SELECT  SUM(buy_count) * 1.0 / SUM(pv_count) AS overall_conversion_rate
     FROM category_conversion
 )
+
 SELECT 
     c.category_id,
     c.sku_count,
     c.pv_count,
     c.buy_count,
-    ROUND(CAST(c.buy_count AS REAL) / c.pv_count, 4) AS conversion_rate,
     g.overall_conversion_rate AS benchmark_rate,
+    ROUND(CAST(c.buy_count AS REAL) / c.pv_count, 4) AS conversion_rate,
     -- 与全局均值对比
     ROUND(CAST(c.buy_count AS REAL) / c.pv_count - g.overall_conversion_rate, 4) AS rate_diff,
     -- 相对提升/下降百分比
@@ -202,8 +209,8 @@ SELECT
     ROUND(CAST(c.pv_count AS REAL) / c.sku_count, 2) AS avg_pv_per_sku,
     -- 排名
     RANK() OVER (ORDER BY CAST(c.buy_count AS REAL) / c.pv_count DESC) AS conversion_rank
-FROM category_conversion c
-CROSS JOIN global_avg g
+FROM category_conversion AS c
+CROSS JOIN global_avg AS g
 ORDER BY conversion_rate DESC;
 
 
@@ -218,6 +225,7 @@ WITH user_buy_items AS (
     FROM user_behavior
     WHERE behavior_type = 'buy'
 ),
+
 -- 自连接找出被同一用户购买的商品对
 item_pairs AS (
     SELECT 
@@ -225,11 +233,12 @@ item_pairs AS (
         b.item_id AS item_b,
         a.category_id AS cat_a,
         b.category_id AS cat_b
-    FROM user_buy_items a
-    JOIN user_buy_items b 
+    FROM user_buy_items AS a
+    JOIN user_buy_items AS b 
         ON a.user_id = b.user_id 
        AND a.item_id < b.item_id  -- 避免重复和自身配对
 )
+
 SELECT 
     item_a,
     item_b,

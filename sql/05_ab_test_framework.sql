@@ -23,6 +23,7 @@ WITH experiment_setup AS (
         '2017-12-01' AS post_period_start,  -- 实验后观察期
         '2017-12-03' AS post_period_end
 ),
+
 -- 用户分组：按user_id奇偶分为对照组/实验组
 user_groups AS (
     SELECT DISTINCT
@@ -34,6 +35,7 @@ user_groups AS (
         user_id % 2 AS group_id
     FROM user_behavior
 ),
+
 -- --------------------------------------------------------
 -- 第二部分: 实验前基线指标（确保两组同质性）
 -- --------------------------------------------------------
@@ -49,11 +51,12 @@ pre_metrics AS (
         -- 转化率: 购买行为 / 点击行为
         ROUND(CAST(SUM(CASE WHEN behavior_type = 'buy' THEN 1 ELSE 0 END) AS REAL)
               / NULLIF(SUM(CASE WHEN behavior_type = 'pv' THEN 1 ELSE 0 END), 0), 4) AS conversion_rate
-    FROM user_behavior ub
-    JOIN user_groups ug ON ub.user_id = ug.user_id
+    FROM user_behavior AS ub
+    JOIN user_groups AS ug ON ub.user_id = ug.user_id
     WHERE ub.date BETWEEN '2017-11-25' AND '2017-11-30'
     GROUP BY ug.group_label, ub.user_id
 ),
+
 -- 实验前汇总
 pre_summary AS (
     SELECT 
@@ -70,6 +73,7 @@ pre_summary AS (
     FROM pre_metrics
     GROUP BY group_label
 )
+
 SELECT 
     '实验前基线' AS period,
     group_label,
@@ -94,6 +98,7 @@ WITH user_groups AS (
         CASE WHEN user_id % 2 = 0 THEN 'control' ELSE 'treatment' END AS group_label
     FROM user_behavior
 ),
+
 post_metrics AS (
     SELECT 
         ug.group_label,
@@ -103,11 +108,12 @@ post_metrics AS (
         SUM(CASE WHEN behavior_type = 'buy'  THEN 1 ELSE 0 END) AS buy_count,
         ROUND(CAST(SUM(CASE WHEN behavior_type = 'buy' THEN 1 ELSE 0 END) AS REAL)
               / NULLIF(SUM(CASE WHEN behavior_type = 'pv' THEN 1 ELSE 0 END), 0), 4) AS conversion_rate
-    FROM user_behavior ub
-    JOIN user_groups ug ON ub.user_id = ug.user_id
+    FROM user_behavior AS ub
+    JOIN user_groups AS ug ON ub.user_id = ug.user_id
     WHERE ub.date BETWEEN '2017-12-01' AND '2017-12-03'
     GROUP BY ug.group_label, ub.user_id
 ),
+
 post_summary AS (
     SELECT 
         group_label,
@@ -122,6 +128,7 @@ post_summary AS (
     FROM post_metrics
     GROUP BY group_label
 )
+
 SELECT 
     '实验后观察' AS period,
     group_label,
@@ -147,6 +154,7 @@ WITH user_groups AS (
         CASE WHEN user_id % 2 = 0 THEN 'control' ELSE 'treatment' END AS group_label
     FROM user_behavior
 )
+
 SELECT 
     ug.user_id,
     ug.group_label,
@@ -160,7 +168,7 @@ SELECT
     COALESCE(post.pv_count, 0) AS post_pv_count,
     -- 差值（用于配对检验或DID分析）
     COALESCE(post.conversion_rate, 0) - COALESCE(pre.conversion_rate, 0) AS conversion_diff
-FROM user_groups ug
+FROM user_groups AS ug
 LEFT JOIN (
     SELECT 
         user_id,
@@ -171,7 +179,7 @@ LEFT JOIN (
     FROM user_behavior
     WHERE date BETWEEN '2017-11-25' AND '2017-11-30'
     GROUP BY user_id
-) pre ON ug.user_id = pre.user_id
+) AS pre ON ug.user_id = pre.user_id
 LEFT JOIN (
     SELECT 
         user_id,
@@ -182,7 +190,7 @@ LEFT JOIN (
     FROM user_behavior
     WHERE date BETWEEN '2017-12-01' AND '2017-12-03'
     GROUP BY user_id
-) post ON ug.user_id = post.user_id
+) AS post ON ug.user_id = post.user_id
 ORDER BY ug.group_label, ug.user_id
 LIMIT 20;  -- 展示样例，实际导出时去掉LIMIT
 
@@ -196,18 +204,20 @@ WITH user_groups AS (
         CASE WHEN user_id % 2 = 0 THEN 'control' ELSE 'treatment' END AS group_label
     FROM user_behavior
 ),
+
 post_user_metrics AS (
     SELECT 
         ug.group_label,
         ub.user_id,
         ROUND(CAST(SUM(CASE WHEN behavior_type = 'buy' THEN 1 ELSE 0 END) AS REAL)
               / NULLIF(SUM(CASE WHEN behavior_type = 'pv' THEN 1 ELSE 0 END), 0), 4) AS conversion_rate
-    FROM user_behavior ub
-    JOIN user_groups ug ON ub.user_id = ug.user_id
+    FROM user_behavior AS ub
+    JOIN user_groups AS ug ON ub.user_id = ug.user_id
     WHERE ub.date BETWEEN '2017-12-01' AND '2017-12-03'
     GROUP BY ug.group_label, ub.user_id
     HAVING SUM(CASE WHEN behavior_type = 'pv' THEN 1 ELSE 0 END) > 0  -- 确保有PV行为
 )
+
 SELECT 
     group_label,
     COUNT(*) AS n,                                    -- 样本量

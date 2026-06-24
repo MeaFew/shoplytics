@@ -60,8 +60,8 @@ retention_base AS (
         a.active_date,
         -- 计算与首日的间隔天数
         DATE_DIFF('day', f.first_date, a.active_date) AS day_diff
-    FROM user_first_active f
-    LEFT JOIN user_active_dates a 
+    FROM user_first_active AS f
+    LEFT JOIN user_active_dates AS a 
         ON f.user_id = a.user_id
        AND a.active_date >= f.first_date
 )
@@ -126,8 +126,8 @@ retention_matrix AS (
             PARTITION BY f.user_id 
             ORDER BY a.active_date
         ) AS active_seq
-    FROM user_first_active f
-    LEFT JOIN user_active_dates a 
+    FROM user_first_active AS f
+    LEFT JOIN user_active_dates AS a 
         ON f.user_id = a.user_id
        AND a.active_date >= f.first_date
 )
@@ -194,9 +194,9 @@ retention_trend AS (
         cs.cohort_size,
         DATE_DIFF('day', f.first_date, a.active_date) AS day_diff,
         COUNT(DISTINCT f.user_id) AS retained_users
-    FROM user_first_active f
-    JOIN cohort_sizes cs ON cs.first_date = f.first_date
-    LEFT JOIN user_active_dates a
+    FROM user_first_active AS f
+    JOIN cohort_sizes AS cs ON cs.first_date = f.first_date
+    LEFT JOIN user_active_dates AS a
         ON f.user_id = a.user_id
        AND a.active_date > f.first_date
     GROUP BY f.first_date, day_diff, cs.cohort_size
