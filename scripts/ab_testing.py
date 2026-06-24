@@ -138,19 +138,18 @@ def run_ab_test(df: pl.DataFrame, split_date: str = AB_TEST_SPLIT_DATE) -> dict:
 
     # ── 1. Hash split (unbiased) + SRM check ───────────────────────────
     user_group = (
-        df.select("user_id").unique().with_columns(
-            pl.col("user_id")
-            .map_elements(hash_group, return_dtype=pl.Utf8)
-            .alias("group")
+        df.select("user_id")
+        .unique()
+        .with_columns(
+            pl.col("user_id").map_elements(hash_group, return_dtype=pl.Utf8).alias("group")
         )
     )
     group_counts = user_group.group_by("group").agg(pl.len().alias("n"))
     n_control = group_counts.filter(pl.col("group") == "control")["n"].item()
     n_treatment = group_counts.filter(pl.col("group") == "treatment")["n"].item()
     total = n_control + n_treatment
-    srm_chi2 = (
-        (n_control - total * 0.5) ** 2 / (total * 0.5)
-        + (n_treatment - total * 0.5) ** 2 / (total * 0.5)
+    srm_chi2 = (n_control - total * 0.5) ** 2 / (total * 0.5) + (n_treatment - total * 0.5) ** 2 / (
+        total * 0.5
     )
     srm_pvalue = 1 - stats.chi2.cdf(srm_chi2, df=1)
     logger.info(
@@ -178,9 +177,7 @@ def run_ab_test(df: pl.DataFrame, split_date: str = AB_TEST_SPLIT_DATE) -> dict:
         .sort("n", descending=True)
         .head(CF_TOP_USERS)
     )
-    control_obs_buys = control_obs_buys.filter(
-        pl.col("user_id").is_in(top_control["user_id"])
-    )
+    control_obs_buys = control_obs_buys.filter(pl.col("user_id").is_in(top_control["user_id"]))
 
     logger.info(
         "Training CF recommender on %s control-group purchases (%s users) ...",
@@ -210,10 +207,7 @@ def run_ab_test(df: pl.DataFrame, split_date: str = AB_TEST_SPLIT_DATE) -> dict:
         .group_by("user_id")
         .agg(pl.col("item_id").alias("bought_items"))
     )
-    obs_bought_map = {
-        r["user_id"]: set(r["bought_items"])
-        for r in treatment_obs_buys.to_dicts()
-    }
+    obs_bought_map = {r["user_id"]: set(r["bought_items"]) for r in treatment_obs_buys.to_dicts()}
     pred_bought_map = {
         r["user_id"]: set(r["bought_items"])
         for r in treatment_pred.filter(pl.col("behavior_type") == "buy")
@@ -236,22 +230,24 @@ def run_ab_test(df: pl.DataFrame, split_date: str = AB_TEST_SPLIT_DATE) -> dict:
     # the denominators asymmetric and inflated the control base, producing a
     # spurious lift. Symmetric eligibility is what makes it a real A/B.)
     control_active_users = set(
-        obs.filter(
-            (pl.col("group") == "control") & (pl.col("behavior_type") == "buy")
-        )["user_id"].unique().to_list()
+        obs.filter((pl.col("group") == "control") & (pl.col("behavior_type") == "buy"))["user_id"]
+        .unique()
+        .to_list()
     )
 
     # Per-user "did this user convert in the prediction window?" — symmetric
     # numerator semantics in both arms, so the comparison is apples-to-apples.
     control_pred_buyers = set(
-        pred.filter((pl.col("group") == "control") & (pl.col("behavior_type") == "buy"))[
-            "user_id"
-        ].unique().to_list()
+        pred.filter((pl.col("group") == "control") & (pl.col("behavior_type") == "buy"))["user_id"]
+        .unique()
+        .to_list()
     )
     treatment_pred_buyers = set(
         pred.filter((pl.col("group") == "treatment") & (pl.col("behavior_type") == "buy"))[
             "user_id"
-        ].unique().to_list()
+        ]
+        .unique()
+        .to_list()
     )
 
     # Treatment arm: additionally record *recommendation-driven* conversion

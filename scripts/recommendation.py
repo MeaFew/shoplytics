@@ -45,8 +45,7 @@ def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
 
     buy_data = (
         df.filter(
-            (pl.col("behavior_type") == "buy")
-            & (pl.col("user_id").is_in(top_users["user_id"]))
+            (pl.col("behavior_type") == "buy") & (pl.col("user_id").is_in(top_users["user_id"]))
         )
         # carry date so leave-one-out can hold out the CHRONOLOGICALLY LAST
         # purchase per user, not the highest item_id (earlier the held-out item
@@ -189,22 +188,10 @@ def run_ltv(df: pl.DataFrame) -> dict:
     """LTV tier contribution (5-tier quantile split)."""
     lv = df.group_by("user_id").agg(
         [
-            pl.col("behavior_type")
-            .filter(pl.col("behavior_type") == "pv")
-            .count()
-            .alias("pv"),
-            pl.col("behavior_type")
-            .filter(pl.col("behavior_type") == "fav")
-            .count()
-            .alias("fav"),
-            pl.col("behavior_type")
-            .filter(pl.col("behavior_type") == "cart")
-            .count()
-            .alias("cart"),
-            pl.col("behavior_type")
-            .filter(pl.col("behavior_type") == "buy")
-            .count()
-            .alias("buy"),
+            pl.col("behavior_type").filter(pl.col("behavior_type") == "pv").count().alias("pv"),
+            pl.col("behavior_type").filter(pl.col("behavior_type") == "fav").count().alias("fav"),
+            pl.col("behavior_type").filter(pl.col("behavior_type") == "cart").count().alias("cart"),
+            pl.col("behavior_type").filter(pl.col("behavior_type") == "buy").count().alias("buy"),
         ]
     )
     lv = lv.with_columns(
@@ -217,11 +204,7 @@ def run_ltv(df: pl.DataFrame) -> dict:
     )
     lv = lv.with_columns((pl.col("value_score") * 3).alias("ltv_estimate"))
 
-    lv_pd = (
-        lv.filter(pl.col("ltv_estimate") > 0)
-        .sort("ltv_estimate", descending=True)
-        .to_pandas()
-    )
+    lv_pd = lv.filter(pl.col("ltv_estimate") > 0).sort("ltv_estimate", descending=True).to_pandas()
     lv_pd["tier"] = pd.qcut(
         lv_pd["ltv_estimate"],
         q=5,

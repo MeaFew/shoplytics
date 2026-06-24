@@ -116,15 +116,9 @@ def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
         .with_columns(
             [
                 ((obs_end - pl.col("last_date")).dt.total_days()).alias("recency_days"),
-                (pl.col("total_buy") / (pl.col("total_pv") + 0.001)).alias(
-                    "buy_conversion"
-                ),
-                (pl.col("total_cart") / (pl.col("total_pv") + 0.001)).alias(
-                    "cart_conversion"
-                ),
-                (pl.col("total_fav") / (pl.col("total_pv") + 0.001)).alias(
-                    "fav_conversion"
-                ),
+                (pl.col("total_buy") / (pl.col("total_pv") + 0.001)).alias("buy_conversion"),
+                (pl.col("total_cart") / (pl.col("total_pv") + 0.001)).alias("cart_conversion"),
+                (pl.col("total_fav") / (pl.col("total_pv") + 0.001)).alias("fav_conversion"),
             ]
         )
     )
@@ -136,12 +130,7 @@ def build_user_features(df: pl.DataFrame) -> pl.DataFrame:
     user_stats = (
         user_stats.join(obs_users, on="user_id", how="inner")
         .join(pred_active_users, on="user_id", how="left")
-        .with_columns(
-            pl.when(pl.col("_has_pred").is_null())
-            .then(1)
-            .otherwise(0)
-            .alias("churn")
-        )
+        .with_columns(pl.when(pl.col("_has_pred").is_null()).then(1).otherwise(0).alias("churn"))
         .drop("_has_pred")
     )
     return user_stats
@@ -264,9 +253,7 @@ def run_churn_prediction(df: pl.DataFrame) -> dict:
     fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
     fpr_xgb, tpr_xgb, _ = roc_curve(y_test, y_prob_xgb)
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(
-        fpr_lr, tpr_lr, label=f"Logistic Regression (AUC={lr_auc:.4f})", linewidth=2
-    )
+    ax.plot(fpr_lr, tpr_lr, label=f"Logistic Regression (AUC={lr_auc:.4f})", linewidth=2)
     ax.plot(fpr_xgb, tpr_xgb, label=f"XGBoost (AUC={xgb_auc:.4f})", linewidth=2)
     ax.plot([0, 1], [0, 1], "k--", label="Random")
     ax.set_xlabel("False Positive Rate")

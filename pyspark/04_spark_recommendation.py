@@ -129,12 +129,8 @@ def main():
     df_rating = df_rating.withColumn("user_id_str", col("user_id").cast("string"))
     df_rating = df_rating.withColumn("item_id_str", col("item_id").cast("string"))
 
-    user_indexer = StringIndexer(
-        inputCol="user_id_str", outputCol="user_idx", handleInvalid="keep"
-    )
-    item_indexer = StringIndexer(
-        inputCol="item_id_str", outputCol="item_idx", handleInvalid="keep"
-    )
+    user_indexer = StringIndexer(inputCol="user_id_str", outputCol="user_idx", handleInvalid="keep")
+    item_indexer = StringIndexer(inputCol="item_id_str", outputCol="item_idx", handleInvalid="keep")
 
     user_indexer_model = user_indexer.fit(df_rating)
     df_rating = user_indexer_model.transform(df_rating)
@@ -240,9 +236,7 @@ def main():
     if sample_user:
         sample_user_id = sample_user[0]["user_id"]
         print(f"[INFO] 用户 {sample_user_id} 的 Top-{TOP_N} 推荐:")
-        user_recs_exploded.filter(col("user_id") == sample_user_id).show(
-            TOP_N, truncate=False
-        )
+        user_recs_exploded.filter(col("user_id") == sample_user_id).show(TOP_N, truncate=False)
 
     # ---------------------------------------------------------------------------
     # 9. 物品相似度分析（可选）：获取每个物品的最相似物品
@@ -258,9 +252,9 @@ def main():
             col("rec.rating").alias("similarity_score"),
         )
         .join(
-            item_id_map.withColumnRenamed(
-                "item_id", "similar_item_id"
-            ).withColumnRenamed("item_idx", "similar_item_idx"),
+            item_id_map.withColumnRenamed("item_id", "similar_item_id").withColumnRenamed(
+                "item_idx", "similar_item_idx"
+            ),
             on="similar_item_idx",
             how="inner",
         )
@@ -291,9 +285,7 @@ def main():
     )
 
     # 10.3 模型评估指标（保存为文本）
-    with open(
-        os.path.join(OUTPUT_PATH, "model_metrics.txt"), "w", encoding="utf-8"
-    ) as f:
+    with open(os.path.join(OUTPUT_PATH, "model_metrics.txt"), "w", encoding="utf-8") as f:
         f.write("ALS Model Metrics\n")
         f.write("=================\n")
         f.write(f"Rank: {RANK}\n")

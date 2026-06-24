@@ -16,6 +16,7 @@ WITH user_first_active AS (
     FROM user_behavior
     GROUP BY user_id
 ),
+
 daily_new_users AS (
     -- 按日期汇总新增用户
     SELECT 
@@ -24,6 +25,7 @@ daily_new_users AS (
     FROM user_first_active
     GROUP BY first_date
 )
+
 SELECT 
     date,
     new_users
@@ -41,11 +43,15 @@ WITH user_first_active AS (
     FROM user_behavior
     GROUP BY user_id
 ),
+
 -- 用户每日活跃标记（去重）
 user_active_dates AS (
-    SELECT DISTINCT user_id, date AS active_date
+    SELECT DISTINCT
+user_id,
+date AS active_date
     FROM user_behavior
 ),
+
 -- 新增用户在后续日期的活跃情况
 retention_base AS (
     SELECT 
@@ -59,6 +65,7 @@ retention_base AS (
         ON f.user_id = a.user_id
        AND a.active_date >= f.first_date
 )
+
 SELECT 
     first_date AS date,
     COUNT(DISTINCT CASE WHEN day_diff = 0 THEN user_id END) AS new_users,
@@ -99,10 +106,14 @@ WITH user_first_active AS (
     FROM user_behavior
     GROUP BY user_id
 ),
+
 user_active_dates AS (
-    SELECT DISTINCT user_id, date AS active_date
+    SELECT DISTINCT
+user_id,
+date AS active_date
     FROM user_behavior
 ),
+
 -- 构建用户-日期活跃矩阵，并标记是否为新增日及后续活跃
 retention_matrix AS (
     SELECT 
@@ -120,6 +131,7 @@ retention_matrix AS (
         ON f.user_id = a.user_id
        AND a.active_date >= f.first_date
 )
+
 SELECT 
     first_date AS cohort_date,
     COUNT(DISTINCT user_id) AS cohort_size,
@@ -148,14 +160,20 @@ ORDER BY first_date;
 -- 第四部分: 留存率变化趋势（按日期展示）
 -- --------------------------------------------------------
 WITH user_first_active AS (
-    SELECT user_id, MIN(date) AS first_date
+    SELECT
+user_id,
+MIN(date) AS first_date
     FROM user_behavior
     GROUP BY user_id
 ),
+
 user_active_dates AS (
-    SELECT DISTINCT user_id, date AS active_date
+    SELECT DISTINCT
+user_id,
+date AS active_date
     FROM user_behavior
 ),
+
 -- Anchor cohort size per first_date INDEPENDENTLY. Earlier the retention_trend
 -- CTE computed cohort_size inside the same LEFT JOIN that produced retained
 -- counts, which made retained_users == cohort_size for every (first_date,
@@ -163,15 +181,18 @@ user_active_dates AS (
 -- reported retention_rate was always 100%. Cohort size now comes from a
 -- separate CTE so the denominator is the full first-day cohort.
 cohort_sizes AS (
-    SELECT first_date, COUNT(DISTINCT user_id) AS cohort_size
+    SELECT
+first_date,
+COUNT(DISTINCT user_id) AS cohort_size
     FROM user_first_active
     GROUP BY first_date
 ),
+
 retention_trend AS (
     SELECT
         f.first_date,
-        DATE_DIFF('day', f.first_date, a.active_date) AS day_diff,
         cs.cohort_size,
+        DATE_DIFF('day', f.first_date, a.active_date) AS day_diff,
         COUNT(DISTINCT f.user_id) AS retained_users
     FROM user_first_active f
     JOIN cohort_sizes cs ON cs.first_date = f.first_date
@@ -180,12 +201,13 @@ retention_trend AS (
        AND a.active_date > f.first_date
     GROUP BY f.first_date, day_diff, cs.cohort_size
 )
+
 SELECT
     first_date,
     cohort_size,
     -- retention_rate now uses the anchored full-cohort denominator.
-    ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2) AS retention_rate,
     day_diff AS retention_day,
+    ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2) AS retention_rate,
     LAG(ROUND(CAST(retained_users AS REAL) * 100 / cohort_size, 2), 1)
         OVER (PARTITION BY day_diff ORDER BY first_date) AS prev_rate,
     ROUND(

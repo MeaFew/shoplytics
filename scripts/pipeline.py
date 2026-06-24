@@ -65,7 +65,8 @@ def compute_headline_metrics(df) -> dict:
 
     # Daily Active Users: mean distinct users per day
     dau = (
-        df.group_by("date").agg(pl.col("user_id").n_unique().alias("users"))
+        df.group_by("date")
+        .agg(pl.col("user_id").n_unique().alias("users"))
         .select(pl.col("users").mean())
         .item()
     )
@@ -178,9 +179,7 @@ def main() -> None:
             "ab_test_lift_pct": round(ab_result["lift_pct"], 2),
             "srm_p_value": round(ab_result["srm_pvalue"], 4),
             "usercf_precision_at_10": round(rec_result["precision_at_k"], 4),
-            "top_20_ltv_contribution_pct": round(
-                ltv_result["top_20_contribution_pct"], 1
-            ),
+            "top_20_ltv_contribution_pct": round(ltv_result["top_20_contribution_pct"], 1),
         },
         "headline_business_metrics": headline,
     }

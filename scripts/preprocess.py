@@ -100,9 +100,7 @@ class DataQualityReport:
         }
 
     def save(self, path: Path) -> None:
-        path.write_text(
-            json.dumps(self.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        path.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
         logger.info(f"数据质量报告已保存: {path}")
 
 
@@ -215,28 +213,33 @@ def feature_engineering(lf: pl.LazyFrame) -> pl.LazyFrame:
     # Convert the epoch column ONCE to a datetime, then derive every time
     # feature from it. Previously `pl.from_epoch("timestamp")` was recomputed
     # 5 times across the expression below (once per derived column).
-    lf = lf.with_columns(pl.from_epoch("timestamp", time_unit="s").alias("_dt")).with_columns(
-        pl.col("_dt").dt.date().alias("date"),
-        pl.col("_dt").dt.hour().cast(pl.Int8).alias("hour"),
-        (pl.col("_dt").dt.weekday() - 1).cast(pl.Int8).alias("day_of_week"),
-        pl.when((pl.col("_dt").dt.weekday() - 1) >= 5)
-        .then(1)
-        .otherwise(0)
-        .cast(pl.Int8)
-        .alias("is_weekend"),
-    ).drop("_dt").with_columns(
-        pl.when(pl.col("hour") < 6)
-        .then(pl.lit("凌晨"))
-        .when(pl.col("hour") < 12)
-        .then(pl.lit("上午"))
-        .when(pl.col("hour") < 14)
-        .then(pl.lit("中午"))
-        .when(pl.col("hour") < 18)
-        .then(pl.lit("下午"))
-        .when(pl.col("hour") < 22)
-        .then(pl.lit("晚上"))
-        .otherwise(pl.lit("深夜"))
-        .alias("time_period"),
+    lf = (
+        lf.with_columns(pl.from_epoch("timestamp", time_unit="s").alias("_dt"))
+        .with_columns(
+            pl.col("_dt").dt.date().alias("date"),
+            pl.col("_dt").dt.hour().cast(pl.Int8).alias("hour"),
+            (pl.col("_dt").dt.weekday() - 1).cast(pl.Int8).alias("day_of_week"),
+            pl.when((pl.col("_dt").dt.weekday() - 1) >= 5)
+            .then(1)
+            .otherwise(0)
+            .cast(pl.Int8)
+            .alias("is_weekend"),
+        )
+        .drop("_dt")
+        .with_columns(
+            pl.when(pl.col("hour") < 6)
+            .then(pl.lit("凌晨"))
+            .when(pl.col("hour") < 12)
+            .then(pl.lit("上午"))
+            .when(pl.col("hour") < 14)
+            .then(pl.lit("中午"))
+            .when(pl.col("hour") < 18)
+            .then(pl.lit("下午"))
+            .when(pl.col("hour") < 22)
+            .then(pl.lit("晚上"))
+            .otherwise(pl.lit("深夜"))
+            .alias("time_period"),
+        )
     )
 
     logger.info("衍生特征: date, hour, day_of_week, is_weekend, time_period")
@@ -263,9 +266,7 @@ def save_processed_data(df: pl.DataFrame, csv_path: Path, parquet_path: Path) ->
 def main() -> None:
     parser = argparse.ArgumentParser(description="电商用户行为数据预处理 (改进版)")
     parser.add_argument("--input", type=Path, default=RAW_CSV_PATH, help="原始数据路径")
-    parser.add_argument(
-        "--output-dir", type=Path, default=PROCESSED_DATA_DIR, help="输出目录"
-    )
+    parser.add_argument("--output-dir", type=Path, default=PROCESSED_DATA_DIR, help="输出目录")
     args = parser.parse_args()
 
     ensure_dirs()
@@ -301,8 +302,7 @@ def main() -> None:
     # 5. 统计 behavior 分布
     behavior_counts = df_final["behavior_type"].value_counts()
     report.behavior_distribution = {
-        row["behavior_type"]: row["count"]
-        for row in behavior_counts.iter_rows(named=True)
+        row["behavior_type"]: row["count"] for row in behavior_counts.iter_rows(named=True)
     }
 
     # 6. 清洗各环节的删除量已在 clean_data 中分步统计（不再硬编码 0）。
@@ -319,9 +319,7 @@ def main() -> None:
             f"清洗删除量分步合计 {step_total:,} ≠ 原始-清洗差值 {delta:,}（可能有边界计数差异）"
         )
 
-    logger.info(
-        f"清洗完成: 原始 {report.original_count:,} 条 → 清洗后 {report.cleaned_count:,} 条"
-    )
+    logger.info(f"清洗完成: 原始 {report.original_count:,} 条 → 清洗后 {report.cleaned_count:,} 条")
 
     # 7. 保存
     csv_out = CLEANED_CSV_PATH
