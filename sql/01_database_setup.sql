@@ -140,9 +140,12 @@ SELECT '数据库表结构、索引和视图创建完成' AS status;
 -- --------------------------------------------------------
 INSERT INTO user_behavior
 SELECT *
-FROM read_csv_auto(
+FROM READ_CSV_AUTO(
     'data/processed/user_behavior_cleaned.csv',
     header = true
 );
 
-SELECT '数据导入完成' AS status, COUNT(*) AS total_rows FROM user_behavior;
+SELECT
+'数据导入完成' AS status,
+COUNT(*) AS total_rows
+FROM user_behavior;

@@ -36,6 +36,7 @@ WITH user_stats AS (
     FROM user_behavior
     GROUP BY user_id
 ),
+
 -- --------------------------------------------------------
 -- 第二部分: 使用NTILE窗口函数进行分箱（1-5分制）
 -- --------------------------------------------------------
@@ -57,6 +58,7 @@ rf_scores AS (
         NTILE(5) OVER (ORDER BY buy_count ASC) AS f_score_buy
     FROM user_stats
 )
+
 SELECT 
     user_id,
     recency_days,
@@ -100,6 +102,7 @@ WITH user_stats AS (
     FROM user_behavior
     GROUP BY user_id
 ),
+
 rf_scores AS (
     SELECT 
         user_id,
@@ -111,6 +114,7 @@ rf_scores AS (
         NTILE(5) OVER (ORDER BY total_actions ASC) AS f_score_actions
     FROM user_stats
 ),
+
 segmented AS (
     SELECT 
         *,
@@ -124,6 +128,7 @@ segmented AS (
         END AS user_segment
     FROM rf_scores
 )
+
 SELECT 
     user_segment,
     COUNT(*) AS user_count,
@@ -153,6 +158,7 @@ WITH user_stats AS (
     FROM user_behavior
     GROUP BY user_id
 )
+
 SELECT 
     -- Recency分位数统计
     'Recency(天)' AS metric,
@@ -160,9 +166,12 @@ SELECT
     ROUND(AVG(recency_days), 2) AS avg_val,
     MAX(recency_days) AS max_val,
     -- 使用PERCENTILE近似（通过窗口函数排序取位置）
-    (SELECT recency_days FROM (SELECT recency_days FROM user_stats ORDER BY recency_days LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 4)) AS q1,
-    (SELECT recency_days FROM (SELECT recency_days FROM user_stats ORDER BY recency_days LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 2)) AS median,
-    (SELECT recency_days FROM (SELECT recency_days FROM user_stats ORDER BY recency_days LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) * 3 / 4)) AS q3
+    (SELECT recency_days FROM (SELECT recency_days FROM user_stats
+ORDER BY recency_days LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 4)) AS q1,
+    (SELECT recency_days FROM (SELECT recency_days FROM user_stats
+ORDER BY recency_days LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 2)) AS median,
+    (SELECT recency_days FROM (SELECT recency_days FROM user_stats
+ORDER BY recency_days LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) * 3 / 4)) AS q3
 FROM user_stats
 UNION ALL
 SELECT 
@@ -170,9 +179,12 @@ SELECT
     MIN(total_actions),
     ROUND(AVG(total_actions), 2),
     MAX(total_actions),
-    (SELECT total_actions FROM (SELECT total_actions FROM user_stats ORDER BY total_actions LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 4)),
-    (SELECT total_actions FROM (SELECT total_actions FROM user_stats ORDER BY total_actions LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 2)),
-    (SELECT total_actions FROM (SELECT total_actions FROM user_stats ORDER BY total_actions LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) * 3 / 4))
+    (SELECT total_actions FROM (SELECT total_actions FROM user_stats
+ORDER BY total_actions LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 4)),
+    (SELECT total_actions FROM (SELECT total_actions FROM user_stats
+ORDER BY total_actions LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 2)),
+    (SELECT total_actions FROM (SELECT total_actions FROM user_stats
+ORDER BY total_actions LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) * 3 / 4))
 FROM user_stats
 UNION ALL
 SELECT 
@@ -180,9 +192,12 @@ SELECT
     MIN(buy_count),
     ROUND(AVG(buy_count), 2),
     MAX(buy_count),
-    (SELECT buy_count FROM (SELECT buy_count FROM user_stats ORDER BY buy_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 4)),
-    (SELECT buy_count FROM (SELECT buy_count FROM user_stats ORDER BY buy_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 2)),
-    (SELECT buy_count FROM (SELECT buy_count FROM user_stats ORDER BY buy_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) * 3 / 4))
+    (SELECT buy_count FROM (SELECT buy_count FROM user_stats
+ORDER BY buy_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 4)),
+    (SELECT buy_count FROM (SELECT buy_count FROM user_stats
+ORDER BY buy_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) / 2)),
+    (SELECT buy_count FROM (SELECT buy_count FROM user_stats
+ORDER BY buy_count LIMIT 1 OFFSET (SELECT COUNT(*) FROM user_stats) * 3 / 4))
 FROM user_stats;
 
 
@@ -198,6 +213,7 @@ WITH user_daily AS (
     FROM user_behavior
     GROUP BY user_id, date
 ),
+
 user_lifecycle AS (
     SELECT 
         user_id,
@@ -212,6 +228,7 @@ user_lifecycle AS (
         ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY date) AS active_seq
     FROM user_daily
 )
+
 SELECT 
     CASE 
         WHEN active_seq = 1 THEN '首次活跃'

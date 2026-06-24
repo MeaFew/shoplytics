@@ -32,6 +32,7 @@ WITH daily_metrics AS (
     FROM user_behavior
     GROUP BY date
 )
+
 SELECT 
     date,
     dau,
@@ -60,6 +61,7 @@ WITH daily_metrics AS (
     FROM user_behavior
     GROUP BY date
 ),
+
 -- 计算全局均值和标准差（用于3σ原则）
 stats AS (
     SELECT 
@@ -74,6 +76,7 @@ stats AS (
         SQRT(GREATEST(AVG(conversion_rate * conversion_rate) - AVG(conversion_rate) * AVG(conversion_rate), 0)) AS std_rate
     FROM daily_metrics
 )
+
 SELECT 
     dm.date,
     dm.dau,
@@ -93,8 +96,8 @@ SELECT
         WHEN ABS((dm.conversion_rate - s.avg_rate) / NULLIF(s.std_rate, 0)) > 2 THEN '转化率异常'
         ELSE '正常'
     END AS anomaly_flag
-FROM daily_metrics dm
-CROSS JOIN stats s
+FROM daily_metrics AS dm
+CROSS JOIN stats AS s
 ORDER BY ABS((dm.conversion_rate - s.avg_rate) / NULLIF(s.std_rate, 0)) DESC;
 
 
@@ -112,6 +115,7 @@ WITH daily_metrics AS (
     FROM user_behavior
     GROUP BY date
 ),
+
 -- 使用窗口函数计算3日移动平均和移动标准差
 moving_stats AS (
     SELECT 
@@ -137,13 +141,14 @@ moving_stats AS (
         ROW_NUMBER() OVER (ORDER BY date) AS rn
     FROM daily_metrics
 )
+
 SELECT 
     date,
     dau,
+    conversion_rate,
     ROUND(dau_ma3, 2) AS dau_ma3,
     ROUND(pv_count, 0) AS pv_count,
     ROUND(pv_ma3, 2) AS pv_ma3,
-    conversion_rate,
     ROUND(rate_ma3, 4) AS rate_ma3,
     -- 计算与移动平均的偏差（标准化）
     CASE 
@@ -174,6 +179,7 @@ WITH daily_metrics AS (
     FROM user_behavior
     GROUP BY date
 ),
+
 -- 标记周末（2017-11-25是周六，11-26周日，12-02周六，12-03周日）
 date_features AS (
     SELECT 
@@ -192,15 +198,16 @@ date_features AS (
         LAG(conversion_rate, 1) OVER (ORDER BY date) AS prev_rate
     FROM daily_metrics
 )
+
 SELECT 
     date,
     dau,
-    ROUND((dau - prev_dau) * 100.0 / NULLIF(prev_dau, 0), 2) AS dau_mom_change,  -- 环比
-    pv_count,
+    pv_count,  -- 环比
     buy_count,
     conversion_rate,
     buyer_count,
     is_weekend,
+    ROUND((dau - prev_dau) * 100.0 / NULLIF(prev_dau, 0), 2) AS dau_mom_change,
     CASE 
         WHEN is_weekend = 1 AND dau > prev_dau THEN '周末流量上涨'
         WHEN is_weekend = 1 AND dau < prev_dau THEN '周末流量下降（需关注）'
@@ -226,6 +233,7 @@ WITH hourly_metrics AS (
     FROM user_behavior
     GROUP BY date, hour
 ),
+
 -- 计算每个小时在所有日期中的均值和标准差
 hourly_stats AS (
     SELECT 
@@ -239,13 +247,14 @@ hourly_stats AS (
     FROM hourly_metrics
     GROUP BY hour
 )
+
 SELECT 
     hm.date,
     hm.hour,
     hm.hourly_dau,
+    hm.conversion_rate,
     ROUND(hs.avg_dau, 2) AS expected_dau,
     ROUND((hm.hourly_dau - hs.avg_dau) / NULLIF(hs.std_dau, 0), 2) AS dau_zscore,
-    hm.conversion_rate,
     ROUND(hs.avg_rate, 4) AS expected_rate,
     -- 标记小时级异常
     CASE 
@@ -253,7 +262,7 @@ SELECT
         WHEN ABS((hm.conversion_rate - hs.avg_rate) / NULLIF(hs.std_rate, 0)) > 2 THEN '时段转化率异常'
         ELSE '正常'
     END AS hourly_anomaly
-FROM hourly_metrics hm
-JOIN hourly_stats hs ON hm.hour = hs.hour
+FROM hourly_metrics AS hm
+JOIN hourly_stats AS hs ON hm.hour = hs.hour
 ORDER BY ABS((hm.hourly_dau - hs.avg_dau) / NULLIF(hs.std_dau, 0)) DESC
 LIMIT 20;
