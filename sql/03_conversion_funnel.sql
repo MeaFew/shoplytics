@@ -24,6 +24,7 @@ WITH user_behavior_summary AS (
     FROM user_behavior
     GROUP BY user_id
 ),
+
 funnel AS (
     SELECT 
         COUNT(*) AS total_users,
@@ -33,6 +34,7 @@ funnel AS (
         SUM(has_buy)  AS buy_users
     FROM user_behavior_summary
 )
+
 SELECT 
     'pv'   AS stage,
     pv_users   AS user_count,
@@ -64,7 +66,10 @@ ORDER BY user_count DESC;
 
 
 -- --------------------------------------------------------
--- 第二部分: 相邻环节转化率（更精细的漏斗）
+-- 第二部分: 事件对（event-pair）转化率
+-- 注：这些是任意两事件之间的转化率（分母为源事件用户数），并非严格链式
+-- 漏斗。fav/cart 是并列意向环节，故 pv→fav 与 pv→cart 共用 pv 为分母；
+-- cart→buy 与 fav→buy 才是"意向→成交"。pv→buy(直接) 排除了先收藏/加购的用户。
 -- --------------------------------------------------------
 WITH user_behavior_summary AS (
     SELECT 
@@ -76,6 +81,7 @@ WITH user_behavior_summary AS (
     FROM user_behavior
     GROUP BY user_id
 )
+
 SELECT 
     'pv → fav'  AS funnel_step,
     SUM(CASE WHEN has_pv = 1 AND has_fav = 1 THEN 1 ELSE 0 END) AS converted_users,
@@ -130,6 +136,7 @@ WITH user_paths AS (
     FROM user_behavior
     GROUP BY user_id
 ),
+
 path_classification AS (
     SELECT 
         user_id,
@@ -143,6 +150,7 @@ path_classification AS (
     FROM user_paths
     WHERE has_pv = 1
 )
+
 SELECT 
     conversion_path,
     COUNT(*) AS user_count,
@@ -169,6 +177,7 @@ WITH daily_user_behavior AS (
     FROM user_behavior
     GROUP BY date, user_id
 ),
+
 daily_funnel AS (
     SELECT 
         date,
@@ -179,6 +188,7 @@ daily_funnel AS (
     FROM daily_user_behavior
     GROUP BY date
 )
+
 SELECT 
     date,
     pv_users,
@@ -210,6 +220,7 @@ WITH hourly_user_behavior AS (
     FROM user_behavior
     GROUP BY time_period, user_id
 ),
+
 hourly_funnel AS (
     SELECT 
         time_period,
@@ -220,6 +231,7 @@ hourly_funnel AS (
     FROM hourly_user_behavior
     GROUP BY time_period
 )
+
 SELECT 
     time_period,
     pv_users,

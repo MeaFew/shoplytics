@@ -76,9 +76,7 @@ def run_sql_analysis(db_path: str | None = None):
         statements = [s.strip() for s in sql.split(";") if s.strip()]
         for stmt in statements:
             lines = [
-                ln
-                for ln in stmt.splitlines()
-                if ln.strip() and not ln.strip().startswith("--")
+                ln for ln in stmt.splitlines() if ln.strip() and not ln.strip().startswith("--")
             ]
             if not lines:
                 continue
@@ -104,9 +102,7 @@ def run_modeling_pipeline():
     """Step 4: Run Python analysis pipeline (EDA, churn, A/B, cohort, LTV)."""
     import subprocess
 
-    result = subprocess.run(
-        ["python", "scripts/pipeline.py"], capture_output=True, text=True
-    )
+    result = subprocess.run(["python", "scripts/pipeline.py"], capture_output=True, text=True)
     print(result.stdout[-800:])
     if result.returncode != 0:
         raise RuntimeError(result.stderr[-500:])

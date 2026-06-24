@@ -50,6 +50,84 @@ def section(title: str) -> None:
     logger.info("=" * 60)
 
 
+def compute_headline_metrics(df) -> dict:
+    """Compute the README "core metrics" from the cleaned behavior frame.
+
+    These (DAU, conversion rates, retention, zero-conversion product share)
+    were previously only stated as static numbers in the README with no code
+    producing them — now they are emitted into pipeline_summary.json so the
+    README can be kept in sync (and audit_consistency.py can verify them).
+    All metrics are computed on the full observation window.
+    """
+    from datetime import timedelta
+
+    import polars as pl
+
+    # Daily Active Users: mean distinct users per day
+    dau = (
+        df.group_by("date")
+        .agg(pl.col("user_id").n_unique().alias("users"))
+        .select(pl.col("users").mean())
+        .item()
+    )
+
+    # Per-user behavior tallies (for conversion rates)
+    user_beh = df.pivot(
+        values="user_id",
+        index="user_id",
+        columns="behavior_type",
+        aggregate_function="len",
+    )
+    # Column presence is behavior-dependent; fill missing
+    for b in ("pv", "buy", "cart", "fav"):
+        if b not in user_beh.columns:
+            user_beh = user_beh.with_columns(pl.lit(0).alias(b))
+
+    # PV -> buy conversion (pool: total buys / total pvs across all users)
+    total_pv = int(user_beh["pv"].sum())
+    total_buy = int(user_beh["buy"].sum())
+    total_cart = int(user_beh["cart"].sum())
+    pv_to_buy = total_buy / total_pv if total_pv else 0.0
+    pv_to_cart = total_cart / total_pv if total_pv else 0.0
+    # cart -> buy conversion
+    cart_to_buy = total_buy / total_cart if total_cart else 0.0
+
+    # Day-1 retention: fraction of users active on their first day who are
+    # also active the next calendar day. We compute first-active date per user,
+    # build the set of (user, date) pairs they were seen on, and flag whether
+    # (user, first_date+1) is in that set.
+    first_active = df.group_by("user_id").agg(pl.col("date").min().alias("first_date"))
+    user_active_dates = set(
+        df.select(["user_id", "date"]).unique().iter_rows()
+    )  # set of (user_id, date) tuples
+    retained_flags = [
+        (uid, fdate + timedelta(days=1)) in user_active_dates
+        for uid, fdate in first_active.iter_rows()
+    ]
+    n_first_day_users = first_active.height
+    n_retained_d1 = sum(retained_flags)
+    retention_d1 = n_retained_d1 / n_first_day_users if n_first_day_users else 0.0
+
+    # Zero-conversion product share: items ever viewed but never bought,
+    # as a fraction of all distinct viewed items.
+    item_pv = df.filter(pl.col("behavior_type") == "pv").select("item_id").unique()
+    item_buy = df.filter(pl.col("behavior_type") == "buy").select("item_id").unique()
+    n_viewed = item_pv.height
+    # items viewed but NOT in the bought set
+    zero_conv_items = item_pv.join(item_buy, on="item_id", how="anti").height
+    zero_conv_share = zero_conv_items / n_viewed if n_viewed else 0.0
+
+    return {
+        "dau_mean": round(float(dau), 1),
+        "pv_to_buy_conversion_pct": round(pv_to_buy * 100, 2),
+        "pv_to_cart_conversion_pct": round(pv_to_cart * 100, 2),
+        "cart_to_buy_conversion_pct": round(cart_to_buy * 100, 2),
+        "retention_d1_pct": round(retention_d1 * 100, 2),
+        "zero_conversion_items": int(zero_conv_items),
+        "zero_conversion_item_share_pct": round(zero_conv_share * 100, 2),
+    }
+
+
 def main() -> None:
     """Run the full analytics pipeline."""
     ensure_dirs()
@@ -72,6 +150,10 @@ def main() -> None:
 
     section("6. LTV 价值估算")
     ltv_result = run_ltv(df)
+
+    section("7. 头条业务指标 (DAU/转化/留存/零转化)")
+    headline = compute_headline_metrics(df)
+    logger.info("头条指标: %s", headline)
 
     # ------------------------------------------------------------------
     # Summary
@@ -97,10 +179,9 @@ def main() -> None:
             "ab_test_lift_pct": round(ab_result["lift_pct"], 2),
             "srm_p_value": round(ab_result["srm_pvalue"], 4),
             "usercf_precision_at_10": round(rec_result["precision_at_k"], 4),
-            "top_20_ltv_contribution_pct": round(
-                ltv_result["top_20_contribution_pct"], 1
-            ),
+            "top_20_ltv_contribution_pct": round(ltv_result["top_20_contribution_pct"], 1),
         },
+        "headline_business_metrics": headline,
     }
 
     summary_path = PROJECT_ROOT / "reports" / "pipeline_summary.json"

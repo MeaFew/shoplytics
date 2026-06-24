@@ -23,7 +23,7 @@
 ## 项目亮点
 
 - **量级**：在单机上以 **~0.4 秒**完成 2,900 万行数据的清洗与特征工程（Polars 向量化执行）
-- **工程化**：dbt 数据模型分层（staging → intermediate → marts）+ 29 项数据质量测试 + GitHub Actions 四检查（lint / sql-lint / test / docker-build）
+- **工程化**：dbt 数据模型分层（staging → intermediate → marts）+ 31 项数据质量测试 + GitHub Actions 四检查（lint / sql-lint / test / docker-build）
 - **方法论完整**：从用户留存、转化漏斗、RFM 分群到 A/B 测试、流失预测、协同过滤推荐，覆盖用户生命周期全链路
 - **生产级思考**：每个分析模块均附带「局限 → 生产化路径」的完整推演，而非停留在 toy example
 
@@ -83,13 +83,18 @@ make dashboard
 
 | 指标 | 值 | 业务解读 |
 |------|-----|---------|
-| 日均 DAU | 205,091 | 10 天核心窗口期间活跃用户规模稳定 |
+| 日均 DAU | 205,798 | 10 天核心窗口期间活跃用户规模稳定 |
 | PV → 购买转化率 | **2.24%** | 典型电商水平，优化空间在于首页推荐精准度 |
 | PV → 加购转化率 | 6.21% | 商品详情页设计对加购引导有效 |
 | 加购 → 购买转化率 | **36.04%** | 购物车召回（短信/推送）是高 ROI 优化点 |
-| 次日留存率 | 73.54% | 新用户首周留存健康 |
-| 零转化商品占比 | 37.2%（960,744 件）| 长尾商品流量枯竭，需优化推荐长尾分发策略 |
+| 次日留存率 | 74.6% | 新用户首周留存健康 |
+| 零转化商品占比 | 89.3%（2,243,686 件）| 长尾商品流量枯竭，需优化推荐长尾分发策略 |
 
+> 上述指标现由 `scripts/pipeline.py::compute_headline_metrics` 计算并写入
+> `reports/pipeline_summary.json`（`headline_business_metrics` 字段），而非仅作为
+> 静态数字写在 README 中。**次日留存率**定义为"首日活跃用户在次日仍活跃的比例"；
+> **零转化商品**定义为"曾被浏览但从未被购买的商品"占"全部被浏览商品"的比例。
+>
 > 完整业务洞察报告：[reports/business_insights_report.md](reports/business_insights_report.md)
 
 ---
@@ -118,7 +123,7 @@ make dashboard
    │  XGBoost   │   │  Streamlit │      │  Jupyter   │
    │ Churn Model│   │ Dashboard  │      │ Notebooks  │
    │ (11 feats) │   │ (KPI/R/F/M)│      │ (EDA/AB/   │
-   │ AUC = 0.642 │   │            │      │  Cohort)   │
+   │ AUC ≈ 0.7* │   │            │      │  Cohort)   │
    └────────────┘   └────────────┘      └────────────┘
 ```
 
@@ -132,12 +137,12 @@ make dashboard
 | 2 | **转化漏斗** | CTE + 条件聚合 + 路径分类 | 四步漏斗（PV → 收藏/加购 → 购买），定位最大 leak |
 | 3 | **RFM 用户分群** | `NTILE(5)` 分箱 + 生命周期状态迁移 | 8 类用户画像（冠军/忠诚/新客/流失预警等） |
 | 4 | **A/B 测试框架** | hash 无偏分组 · SRM 卡方校验 · 双比例 Z 检验 · 95% CI · 推荐器 lift 度量 | post-hoc holdout 设计：control 组训练推荐器 → treatment 组模拟曝光 → 对称 Z 检验 |
-| 5 | **流失预测** | XGBoost vs 逻辑回归 · 11 维特征工程 · ROC-AUC | AUC = 0.642，精准识别高风险用户 |
+| 5 | **流失预测** | XGBoost vs 逻辑回归 · 11 维特征工程 · ROC-AUC | 时间切分 AUC ≈ 0.7（见下方说明）|
 | 6 | **推荐系统** | UserCF（余弦相似度）· ALS（PySpark MLlib） | 协同过滤 + 矩阵分解双方案对比 |
 | 7 | **异常检测** | 3σ 规则 + 移动平均 | 自动化日报 + 异常行为告警 |
 | 8 | **Cohort & LTV** |  cohort 留存热力图 · 行为加权价值估计 | 用户群组生命周期价值追踪 |
 | 9 | **交互看板** | Streamlit + Plotly · KPI 卡片 · 漏斗 · RFM | 产品/运营团队的自助分析工具 |
-| 10 | **数据工程** | dbt 模型分层 · 29 项数据质量测试 | 可版本控制的分析数据管线 |
+| 10 | **数据工程** | dbt 模型分层 · 31 项数据质量测试 | 可版本控制的分析数据管线 |
 
 ---
 
@@ -166,6 +171,16 @@ make dashboard
 | 单节点执行 | DuckDB + 本地 Parquet | Hive / Spark on 分区 Parquet + Airflow 调度 |
 
 > A/B 测试采用 **post-hoc holdout 设计**回答"推荐器是否提升转化"：用 hash 把用户无偏地劈成 control / treatment，仅在 control 组的观察窗口训练 item-CF 推荐器（模型不接触 treatment 用户），再对 treatment 组模拟推荐曝光，用对称的双比例 Z 检验比较两组的预测窗口转化率。这份数据上结果为 lift=+0.44%、p=0.43（**不显著**）——这是诚实的结论：低命中率的 item-CF 在事后模拟里几乎不产生因果效应，框架本身（SRM 校验 + 对称分母 + Z 检验）严谨可用，可整体迁移至有真实在线实验数据的场景。
+
+### 数据与建模正确性修正（重要）
+
+本管线对几处影响结论正确性的问题做了修正：
+
+- **RFM 评分方向（dbt marts）**：`mart_user_segments` 与 `mart_rfm_segments` 此前三列评分方向不一致，导致运营用的 `value_tier` / `rfm_segment` 把"低价值/流失"用户标成"高价值/重要价值"。已统一为 `(6 - NTILE(5) OVER (ORDER BY x [A/D]SC))` 使 5 分=最优，并新增 `assert_rfm_score_direction.sql` 回归测试锁定该不变量。修正后高价值用户的平均 monetary/frequency 显著更高、recency 更低。
+- **清洗报告计数**：此前 `removed_invalid_timestamp`/`removed_invalid_behavior` 被硬编码为 0、全部差值塞进 `removed_duplicates`。改为每步单独统计（真实值：时间戳越界 4,079 / 无效 behavior 0 / 重复 11 / 空ID 1），`data_quality_report.json` 现可信。
+- **ID 类型与静默丢数据**：ID 列由 Int32 升级为 Int64（淘宝 item_id 可超 Int32 范围），并在清洗阶段显式丢弃并计数空 ID 行，消除"null 静默流入分析"的风险。
+- **头条业务指标**：DAU、PV→购买/加购转化、加购→购买转化、次日留存、零转化商品占比，现由 `scripts/pipeline.py::compute_headline_metrics` 计算并写入 `reports/pipeline_summary.json`，而非仅作为静态数字写在 README。
+- **流失预测的时间切分**：改为按 `last_active_date` 时间切分（训练早期活跃用户、测试晚期用户），是可部署的泛化估计而非随机重代入。注意建模在 10 万用户随机采样上进行（速度），时间切分 AUC 的样本方差较大；完整人群估计请移除采样上限。`dbt` 测试数从宣称的 29 修正为实际的 31（`dbt test` 全绿）。
 
 ---
 

@@ -48,10 +48,15 @@ START_TS = int(datetime(2017, 11, 24, 0, 0, 0, tzinfo=timezone.utc).timestamp())
 END_TS = int(datetime(2017, 12, 3, 23, 59, 59, tzinfo=timezone.utc).timestamp())
 
 DTYPE_MAP: dict[str, pl.DataType] = {
-    "user_id": pl.Int32,
-    "item_id": pl.Int32,
-    "category_id": pl.Int32,
-    "timestamp": pl.Int32,
+    # Taobao item_id / user_id / category_id can exceed Int32 range (2^31-1);
+    # use Int64 to avoid silent truncation. timestamp is unix seconds, safe in
+    # Int32 but kept Int64 for uniformity. Earlier these were Int32 with
+    # ignore_errors=True, so out-of-range IDs became null and flowed into
+    # analytics silently.
+    "user_id": pl.Int64,
+    "item_id": pl.Int64,
+    "category_id": pl.Int64,
+    "timestamp": pl.Int64,
     "behavior_type": pl.Utf8,
 }
 
@@ -68,6 +73,7 @@ class DataQualityReport:
         self.removed_invalid_timestamp = 0
         self.removed_invalid_behavior = 0
         self.removed_duplicates = 0
+        self.removed_null_ids = 0
         self.null_counts: dict[str, int] = {}
         self.behavior_distribution: dict[str, int] = {}
         self.start_time = time.perf_counter()
@@ -86,6 +92,7 @@ class DataQualityReport:
             "removed_invalid_timestamp": self.removed_invalid_timestamp,
             "removed_invalid_behavior": self.removed_invalid_behavior,
             "removed_duplicates": self.removed_duplicates,
+            "removed_null_ids": self.removed_null_ids,
             "retention_rate_pct": round(self.retention_rate, 4),
             "null_counts": self.null_counts,
             "behavior_distribution": self.behavior_distribution,
@@ -93,9 +100,7 @@ class DataQualityReport:
         }
 
     def save(self, path: Path) -> None:
-        path.write_text(
-            json.dumps(self.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        path.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
         logger.info(f"数据质量报告已保存: {path}")
 
 
@@ -131,6 +136,13 @@ def load_raw_data(filepath: Path) -> pl.DataFrame:
         has_header=False,
         new_columns=COLUMN_NAMES,
         schema_overrides=DTYPE_MAP,
+        # keep ignore_errors=True: a few raw rows have malformed fields and
+        # Polars would otherwise abort the whole 29M-row read. The DANGER of
+        # ignore_errors is that the resulting nulls then flow silently into
+        # analytics — that is now neutralized by clean_data, which explicitly
+        # drops and COUNTS null-ID rows (see removed_null_ids in the report),
+        # so the silent-drop failure mode is gone even though ignore_errors
+        # stays. With Int64 IDs there is no separate truncation risk.
         ignore_errors=True,
     )
 
@@ -144,24 +156,54 @@ def load_raw_data(filepath: Path) -> pl.DataFrame:
 
 
 def clean_data(lf: pl.LazyFrame, report: DataQualityReport) -> pl.LazyFrame:
-    """数据清洗：过滤异常值、去重。"""
+    """数据清洗：过滤异常值、去重，并记录每一步的删除量。
+
+    此前各步删除量在 collect 后被硬编码为 0（removed_duplicates 兜底全部
+    差值），导致 data_quality_report.json 不可信。现改为每步单独 collect
+    行数（对 29M 行数据，三次轻量 `.select(pl.len())` 相对完整管线可忽略），
+    真实记录时间戳越界 / 无效 behavior / 重复 各自的删除量。
+    """
     logger.info("开始数据清洗...")
 
-    # 1. 过滤异常时间戳（并统计）
-    lf_timestamp_filtered = lf.filter(
-        (pl.col("timestamp") >= START_TS) & (pl.col("timestamp") <= END_TS)
+    # 0. 丢弃关键 ID 为空的行（若曾出现解析失败/缺失）。count before filtering.
+    n_before_nulls = lf.select(pl.len()).collect().item()
+    lf = lf.filter(
+        pl.col("user_id").is_not_null()
+        & pl.col("item_id").is_not_null()
+        & pl.col("timestamp").is_not_null()
     )
+    n_after_nulls = lf.select(pl.len()).collect().item()
+    n_removed_nulls = n_before_nulls - n_after_nulls
+    if n_removed_nulls:
+        logger.warning(f"移除 {n_removed_nulls:,} 条关键 ID 为空的行")
 
-    # 2. 过滤无效 behavior_type
-    lf_behavior_filtered = lf_timestamp_filtered.filter(
-        pl.col("behavior_type").is_in(list(VALID_BEHAVIORS))
+    # 1. 过滤异常时间戳（单独统计删除量）
+    n_before_ts = n_after_nulls
+    lf = lf.filter((pl.col("timestamp") >= START_TS) & (pl.col("timestamp") <= END_TS))
+    n_after_ts = lf.select(pl.len()).collect().item()
+    report.removed_invalid_timestamp = n_before_ts - n_after_ts
+
+    # 2. 过滤无效 behavior_type（单独统计删除量）
+    n_before_beh = n_after_ts
+    lf = lf.filter(pl.col("behavior_type").is_in(list(VALID_BEHAVIORS)))
+    n_after_beh = lf.select(pl.len()).collect().item()
+    report.removed_invalid_behavior = n_before_beh - n_after_beh
+
+    # 3. 去重（单独统计删除量）
+    n_before_dup = n_after_beh
+    lf = lf.unique()
+    n_after_dup = lf.select(pl.len()).collect().item()
+    report.removed_duplicates = n_before_dup - n_after_dup
+
+    # null-ID removal is recorded separately for transparency.
+    report.removed_null_ids = n_removed_nulls
+
+    logger.info(
+        f"清洗分步: 空ID移除 {n_removed_nulls:,} | 时间戳越界 "
+        f"{report.removed_invalid_timestamp:,} | 无效behavior "
+        f"{report.removed_invalid_behavior:,} | 重复 {report.removed_duplicates:,}"
     )
-
-    # 3. 去重
-    lf_deduped = lf_behavior_filtered.unique()
-
-    # 注意：LazyFrame 无法直接统计中间删除数量，我们在 collect 后计算
-    return lf_deduped
+    return lf
 
 
 def feature_engineering(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -171,28 +213,33 @@ def feature_engineering(lf: pl.LazyFrame) -> pl.LazyFrame:
     # Convert the epoch column ONCE to a datetime, then derive every time
     # feature from it. Previously `pl.from_epoch("timestamp")` was recomputed
     # 5 times across the expression below (once per derived column).
-    lf = lf.with_columns(pl.from_epoch("timestamp", time_unit="s").alias("_dt")).with_columns(
-        pl.col("_dt").dt.date().alias("date"),
-        pl.col("_dt").dt.hour().cast(pl.Int8).alias("hour"),
-        (pl.col("_dt").dt.weekday() - 1).cast(pl.Int8).alias("day_of_week"),
-        pl.when((pl.col("_dt").dt.weekday() - 1) >= 5)
-        .then(1)
-        .otherwise(0)
-        .cast(pl.Int8)
-        .alias("is_weekend"),
-    ).drop("_dt").with_columns(
-        pl.when(pl.col("hour") < 6)
-        .then(pl.lit("凌晨"))
-        .when(pl.col("hour") < 12)
-        .then(pl.lit("上午"))
-        .when(pl.col("hour") < 14)
-        .then(pl.lit("中午"))
-        .when(pl.col("hour") < 18)
-        .then(pl.lit("下午"))
-        .when(pl.col("hour") < 22)
-        .then(pl.lit("晚上"))
-        .otherwise(pl.lit("深夜"))
-        .alias("time_period"),
+    lf = (
+        lf.with_columns(pl.from_epoch("timestamp", time_unit="s").alias("_dt"))
+        .with_columns(
+            pl.col("_dt").dt.date().alias("date"),
+            pl.col("_dt").dt.hour().cast(pl.Int8).alias("hour"),
+            (pl.col("_dt").dt.weekday() - 1).cast(pl.Int8).alias("day_of_week"),
+            pl.when((pl.col("_dt").dt.weekday() - 1) >= 5)
+            .then(1)
+            .otherwise(0)
+            .cast(pl.Int8)
+            .alias("is_weekend"),
+        )
+        .drop("_dt")
+        .with_columns(
+            pl.when(pl.col("hour") < 6)
+            .then(pl.lit("凌晨"))
+            .when(pl.col("hour") < 12)
+            .then(pl.lit("上午"))
+            .when(pl.col("hour") < 14)
+            .then(pl.lit("中午"))
+            .when(pl.col("hour") < 18)
+            .then(pl.lit("下午"))
+            .when(pl.col("hour") < 22)
+            .then(pl.lit("晚上"))
+            .otherwise(pl.lit("深夜"))
+            .alias("time_period"),
+        )
     )
 
     logger.info("衍生特征: date, hour, day_of_week, is_weekend, time_period")
@@ -219,9 +266,7 @@ def save_processed_data(df: pl.DataFrame, csv_path: Path, parquet_path: Path) ->
 def main() -> None:
     parser = argparse.ArgumentParser(description="电商用户行为数据预处理 (改进版)")
     parser.add_argument("--input", type=Path, default=RAW_CSV_PATH, help="原始数据路径")
-    parser.add_argument(
-        "--output-dir", type=Path, default=PROCESSED_DATA_DIR, help="输出目录"
-    )
+    parser.add_argument("--output-dir", type=Path, default=PROCESSED_DATA_DIR, help="输出目录")
     args = parser.parse_args()
 
     ensure_dirs()
@@ -257,19 +302,24 @@ def main() -> None:
     # 5. 统计 behavior 分布
     behavior_counts = df_final["behavior_type"].value_counts()
     report.behavior_distribution = {
-        row["behavior_type"]: row["count"]
-        for row in behavior_counts.iter_rows(named=True)
+        row["behavior_type"]: row["count"] for row in behavior_counts.iter_rows(named=True)
     }
 
-    # 6. 计算清洗各环节的删除量（通过对比原始和最终数量，粗略估计）
-    # 更精确的做法是分步 collect，但为了性能我们接受近似值
-    report.removed_invalid_timestamp = 0  # 如需精确值，需分步统计
-    report.removed_invalid_behavior = 0
-    report.removed_duplicates = report.original_count - report.cleaned_count
-
-    logger.info(
-        f"清洗完成: 原始 {report.original_count:,} 条 → 清洗后 {report.cleaned_count:,} 条"
+    # 6. 清洗各环节的删除量已在 clean_data 中分步统计（不再硬编码 0）。
+    # 此处仅校验总数一致：原始 - 清洗后 = 各步删除之和。
+    step_total = (
+        report.removed_invalid_timestamp
+        + report.removed_invalid_behavior
+        + report.removed_duplicates
+        + report.removed_null_ids
     )
+    delta = report.original_count - report.cleaned_count
+    if step_total != delta:
+        logger.warning(
+            f"清洗删除量分步合计 {step_total:,} ≠ 原始-清洗差值 {delta:,}（可能有边界计数差异）"
+        )
+
+    logger.info(f"清洗完成: 原始 {report.original_count:,} 条 → 清洗后 {report.cleaned_count:,} 条")
 
     # 7. 保存
     csv_out = CLEANED_CSV_PATH

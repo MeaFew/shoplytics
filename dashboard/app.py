@@ -122,10 +122,7 @@ def compute_kpis(df: pl.DataFrame) -> tuple:
 
     # 一次性统计所有行为数量
     behavior_counts = df.group_by("behavior_type").agg(pl.len().alias("count"))
-    counts = {
-        row["behavior_type"]: row["count"]
-        for row in behavior_counts.iter_rows(named=True)
-    }
+    counts = {row["behavior_type"]: row["count"] for row in behavior_counts.iter_rows(named=True)}
 
     total_pv = counts.get("pv", 0)
     total_buy = counts.get("buy", 0)
@@ -149,10 +146,7 @@ def compute_kpis(df: pl.DataFrame) -> tuple:
 # ---------------------------------------------------------------------------
 def plot_dau(df: pl.DataFrame) -> go.Figure:
     dau = (
-        df.group_by("date")
-        .agg(pl.col("user_id").n_unique().alias("DAU"))
-        .sort("date")
-        .to_pandas()
+        df.group_by("date").agg(pl.col("user_id").n_unique().alias("DAU")).sort("date").to_pandas()
     )
     fig = px.line(
         dau,
@@ -316,16 +310,11 @@ def plot_repurchase_trend(df: pl.DataFrame) -> go.Figure:
         .agg(
             [
                 pl.count().alias("total_buyers"),
-                pl.col("buy_cnt")
-                .filter(pl.col("buy_cnt") >= 2)
-                .count()
-                .alias("repeat_buyers"),
+                pl.col("buy_cnt").filter(pl.col("buy_cnt") >= 2).count().alias("repeat_buyers"),
             ]
         )
         .with_columns(
-            (pl.col("repeat_buyers") / pl.col("total_buyers") * 100).alias(
-                "repurchase_rate"
-            )
+            (pl.col("repeat_buyers") / pl.col("total_buyers") * 100).alias("repurchase_rate")
         )
         .sort("date")
         .to_pandas()
@@ -533,16 +522,12 @@ def main():
     all_dates = df["date"].unique().sort().to_list()
     all_behaviors = df["behavior_type"].unique().sort().to_list()
 
-    selected_dates = st.sidebar.multiselect(
-        "选择日期", options=all_dates, default=all_dates
-    )
+    selected_dates = st.sidebar.multiselect("选择日期", options=all_dates, default=all_dates)
     selected_behaviors = st.sidebar.multiselect(
         "行为类型", options=all_behaviors, default=all_behaviors
     )
     hour_range = st.sidebar.slider("小时范围", 0, 23, (0, 23))
-    weekend_option = st.sidebar.radio(
-        "周末筛选", options=["全部", "仅周末", "仅工作日"], index=0
-    )
+    weekend_option = st.sidebar.radio("周末筛选", options=["全部", "仅周末", "仅工作日"], index=0)
 
     # 刷新缓存按钮
     if st.sidebar.button("🔄 刷新数据缓存"):
