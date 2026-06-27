@@ -189,7 +189,6 @@ def run_ab_test(df: pl.DataFrame, split_date: str = AB_TEST_SPLIT_DATE) -> dict:
     sim, item_idx = _build_item_similarity(control_obs_buys)
 
     # ── 3. Deploy recommender to TREATMENT; measure lift ───────────────
-    # ── 3. Deploy recommender to TREATMENT; measure lift ───────────────
     # The recommender (learned on control) is "deployed" to treatment users:
     # each gets Top-K item-CF recommendations from their observation-window
     # history. We record two things per treatment user:
