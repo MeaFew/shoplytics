@@ -1,6 +1,6 @@
 # 电商用户行为分析 Dashboard
 
-基于 **Streamlit** + **Plotly** + **Polars** 构建的交互式数据可视化平台，服务于电商数据分析师数据分析项目。
+基于 **Streamlit** + **Plotly** + **Polars** 构建的交互式数据可视化平台，用于探索电商用户行为数据。
 
 ---
 

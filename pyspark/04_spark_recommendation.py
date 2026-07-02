@@ -239,18 +239,46 @@ def main():
         user_recs_exploded.filter(col("user_id") == sample_user_id).show(TOP_N, truncate=False)
 
     # ---------------------------------------------------------------------------
-    # 9. 物品相似度分析（可选）：获取每个物品的最相似物品
+    # 9. 物品相似度分析：基于 ALS 学习到的物品隐因子计算物品-物品余弦相似度
     # ---------------------------------------------------------------------------
+    # 说明：model.recommendForAllItems(TOP_N) 返回的是"每个物品最可能互动的【用户】"，
+    # 而非"相似物品"，旧代码误把 user_idx 当作 similar_item_idx 与物品表 join，
+    # 产生的是无意义的 item↔item 对。此处改为直接利用 model.itemFactors（物品隐因子向量）
+    # 计算余弦相似度，得到真正的物品-物品相似度。
     print(f"[INFO] 物品相似度推荐（Top-{TOP_N} 相似物品）预览:")
 
-    item_recs = model.recommendForAllItems(TOP_N)
-    item_recs_exploded = (
-        item_recs.withColumn("rec", explode(col("recommendations")))
+    from pyspark.ml.feature import Normalizer
+
+    # itemFactors 列: id(=item_idx) | features(向量, 维度=RANK)
+    item_factors = model.itemFactors.withColumnRenamed("id", "item_idx")
+
+    # L2 归一化后，点积即为余弦相似度
+    normalizer = Normalizer(inputCol="features", outputCol="norm_features", p=2.0)
+    item_norm = normalizer.transform(item_factors).select("item_idx", "norm_features")
+
+    # 自连接做两两余弦相似度（features · features），过滤掉自身
+    from pyspark.sql.functions import expr as spark_expr
+
+    item_pairs = (
+        item_norm.alias("a")
+        .crossJoin(item_norm.alias("b"))
         .select(
-            col("item_idx"),
-            col("rec.user_idx").alias("similar_item_idx"),
-            col("rec.rating").alias("similarity_score"),
+            col("a.item_idx").alias("item_idx"),
+            col("b.item_idx").alias("similar_item_idx"),
+            (col("a.norm_features").dot(col("b.norm_features"))).alias("similarity_score"),
         )
+        .filter(col("item_idx") != col("similar_item_idx"))
+    )
+
+    # 为每个物品取相似度最高的 Top-N
+    item_recs_exploded = (
+        item_pairs.withColumn(
+            "rnk",
+            spark_expr("row_number() over (partition by item_idx order by similarity_score desc)"),
+        )
+        .filter(col("rnk") <= TOP_N)
+        .drop("rnk")
+        # 反查原始 item_id（item 与 similar_item 两列）
         .join(
             item_id_map.withColumnRenamed("item_id", "similar_item_id").withColumnRenamed(
                 "item_idx", "similar_item_idx"

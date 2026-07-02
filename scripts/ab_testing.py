@@ -88,8 +88,10 @@ def _build_item_similarity(buy_df: pl.DataFrame) -> tuple[np.ndarray, dict]:
     user_list = sorted(buy_pd["user_id"].unique())
     user_idx = {u: i for i, u in enumerate(user_list)}
     iu = np.zeros((len(item_list), len(user_list)), dtype=np.float32)
-    for _, row in buy_pd.iterrows():
-        iu[item_idx[row["item_id"]], user_idx[row["user_id"]]] = 1.0
+    # 向量化填充，避免逐行 iterrows()（数据已 unique，直接高级索引赋值即可）。
+    i_rows = buy_pd["item_id"].map(item_idx).to_numpy()
+    j_cols = buy_pd["user_id"].map(user_idx).to_numpy()
+    iu[i_rows, j_cols] = 1.0
 
     # Cosine similarity between items (rows). Diagonal zeroed so an item is
     # never recommended as "similar to itself".

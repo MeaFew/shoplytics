@@ -82,8 +82,8 @@ def load_data(csv_path: Path, parquet_path: Path) -> pl.DataFrame | None:
             return df
         else:
             return None
-    except Exception as e:
-        logger.error(f"数据加载失败: {e}")
+    except Exception:
+        logger.exception("数据加载失败")  # 保留完整堆栈便于排查
         return None
 
 

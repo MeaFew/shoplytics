@@ -205,4 +205,4 @@ dbt compile --select int_user_daily_metrics
 
 ## 作者
 
-2026 数据工程师 | 电商数据分析师数据分析项目
+电商用户行为数据分析项目

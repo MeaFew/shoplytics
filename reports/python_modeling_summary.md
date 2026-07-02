@@ -1,6 +1,6 @@
 # Python 建模模块总结报告
 
-> **项目**: 电商数据分析师数据分析项目  
+> **项目**: 电商用户行为数据分析项目  
 > **模块**: Python 建模与分析  
 > **技术栈**: Pandas, NumPy, Matplotlib, Seaborn, Scikit-learn, XGBoost, SciPy  
 > **交付物**: 4 个 Jupyter Notebook + 3 个 Python 脚本  
@@ -215,6 +215,5 @@ PV: 1,420,000 (环比 +3.5%)
 
 ---
 
-*模块说明: Python 分析模块*  
 *数据集: 阿里云天池 — 电商用户行为数据集*  
 *时间范围: 2017-11-24 至 2017-12-03*

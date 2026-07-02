@@ -1,8 +1,11 @@
 # Apache Superset + DuckDB 配置
 # 用法:
-#   docker compose -f docker-compose.superset.yml up -d
-#   docker compose -f docker-compose.superset.yml logs -f superset
+#   1. 生成随机密钥（仅首次）: echo "SUPERSET_SECRET_KEY=$(openssl rand -base64 42)" > .env
+#   2. docker compose -f docker-compose.superset.yml up -d
+#   3. docker compose -f docker-compose.superset.yml logs -f superset
 # 访问: http://localhost:8088 (admin / admin)
+#
+# 注意: SUPERSET_SECRET_KEY 必须通过环境变量/.env 提供，没有默认值。
 
 services:
   superset:
@@ -11,7 +14,7 @@ services:
     ports:
       - "8088:8088"
     environment:
-      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-dev-key-change-in-production}
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:?请在 .env 文件或环境变量中设置 SUPERSET_SECRET_KEY, 例如: openssl rand -base64 42}
       - DATABASE_DIALECT=sqlite
       - DATABASE_HOST=/app/superset_home/superset.db
       - DATABASE_PORT=
