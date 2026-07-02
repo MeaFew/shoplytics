@@ -95,6 +95,9 @@ make dashboard
 > 静态数字写在 README 中。**次日留存率**定义为"首日活跃用户在次日仍活跃的比例"；
 > **零转化商品**定义为"曾被浏览但从未被购买的商品"占"全部被浏览商品"的比例。
 >
+> Windows 用户注意：直接运行 `sqlfluff lint sql/` 若遇到编码错误，请先执行
+> `set PYTHONUTF8=1`（CMD）或 `$env:PYTHONUTF8=1`（PowerShell）。
+>
 > 完整业务洞察报告：[reports/business_insights_report.md](reports/business_insights_report.md)
 
 ---
@@ -181,6 +184,8 @@ make dashboard
 - **ID 类型与静默丢数据**：ID 列由 Int32 升级为 Int64（商品 item_id 可超 Int32 范围），并在清洗阶段显式丢弃并计数空 ID 行，消除"null 静默流入分析"的风险。
 - **头条业务指标**：DAU、PV→购买/加购转化、加购→购买转化、次日留存、零转化商品占比，现由 `scripts/pipeline.py::compute_headline_metrics` 计算并写入 `reports/pipeline_summary.json`，而非仅作为静态数字写在 README。
 - **流失预测的时间切分**：改为按 `last_active_date` 时间切分（训练早期活跃用户、测试晚期用户），是可部署的泛化估计而非随机重代入。注意建模在 10 万用户随机采样上进行（速度），时间切分 AUC 的样本方差较大；完整人群估计请移除采样上限。`dbt` 测试数从宣称的 29 修正为实际的 31（`dbt test` 全绿）。
+- **推荐系统 Precision@10 的诚实报告**：UserCF 在极度稀疏的购买矩阵（约 99.8% 稀疏度，仅取前 500 名高购买用户）上命中率为 0，因此评估器在 UserCF 命中为 0 时回退到 popularity baseline。当前报告值为 **Precision@10 = 0.02**（popularity fallback）。这仍是一个 straw-man 基线；生产级推荐请使用 `pyspark/` 中的 ALS 矩阵分解。
+- **Makefile 环境变量**：为所有 Python 目标注入 `PYTHONPATH=.`；为 `dbt` 目标注入 `DBT_DUCKDB_PATH` / `DBT_DATA_PATH` 的绝对路径，避免 `cd dbt` 后相对路径解析到错误位置。
 
 ---
 

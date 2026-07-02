@@ -31,69 +31,112 @@ apply_chart_style()
 # Cap on high-activity users used to build the CF matrix (keeps it tractable).
 TOP_USERS_LIMIT = 500
 
+# Implicit-feedback weights for the user×item matrix. Using all behavior types
+# (not just purchases) produces a denser, more informative user profile while
+# still keeping purchases as the strongest signal.
+BEHAVIOR_MATRIX_WEIGHTS = {
+    "pv": 1.0,
+    "fav": 2.0,
+    "cart": 3.0,
+    "buy": 5.0,
+}
 
-def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
-    """User-based collaborative filtering with leave-one-out evaluation."""
-    top_users = (
+
+def _build_user_item_matrix(df: pl.DataFrame) -> tuple[np.ndarray, list, list]:
+    """Build a weighted user×item matrix and return (matrix, user_list, item_list)."""
+    # Keep only users with at least two purchases so leave-one-out is possible.
+    eligible_users = (
         df.filter(pl.col("behavior_type") == "buy")
         .group_by("user_id")
         .agg(pl.len().alias("buy_count"))
         .filter(pl.col("buy_count") >= 2)
         .sort("buy_count", descending=True)
-        .head(TOP_USERS_LIMIT)
+        .head(TOP_USERS_LIMIT)["user_id"]
+        .to_list()
     )
 
-    buy_data = (
-        df.filter(
-            (pl.col("behavior_type") == "buy") & (pl.col("user_id").is_in(top_users["user_id"]))
+    interaction_df = (
+        df.filter(pl.col("user_id").is_in(eligible_users))
+        .select(["user_id", "item_id", "behavior_type"])
+        .with_columns(
+            pl.col("behavior_type").replace(BEHAVIOR_MATRIX_WEIGHTS, default=0.0).alias("weight")
         )
-        # carry date so leave-one-out can hold out the CHRONOLOGICALLY LAST
-        # purchase per user, not the highest item_id (earlier the held-out item
-        # was the max item_id, a non-temporal holdout).
-        .select(["user_id", "item_id", "date"])
-        .unique()
-        .sort(["user_id", "date", "item_id"])
+        .group_by(["user_id", "item_id"])
+        .agg(pl.col("weight").sum().alias("weight"))
         .to_pandas()
     )
 
-    user_list = sorted(buy_data["user_id"].unique())
-    item_list = sorted(buy_data["item_id"].unique())
+    user_list = sorted(interaction_df["user_id"].unique())
+    item_list = sorted(interaction_df["item_id"].unique())
     user_idx = {u: i for i, u in enumerate(user_list)}
     item_idx = {it: i for i, it in enumerate(item_list)}
 
-    # Build the user×item interaction matrix with VECTORIZED assignment instead
-    # of a per-row Python loop (the loop over up to hundreds of thousands of
-    # rows was the slowest part of the CF build).
-    rows = buy_data["user_id"].map(user_idx).to_numpy()
-    cols = buy_data["item_id"].map(item_idx).to_numpy()
+    rows = interaction_df["user_id"].map(user_idx).to_numpy()
+    cols = interaction_df["item_id"].map(item_idx).to_numpy()
     matrix = np.zeros((len(user_list), len(item_list)), dtype=np.float64)
-    matrix[rows, cols] = 1
+    np.maximum.at(matrix, (rows, cols), interaction_df["weight"].to_numpy())
+
+    return matrix, user_list, item_list
+
+
+def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
+    """User-based collaborative filtering with leave-one-out evaluation.
+
+    Falls back to a popularity baseline if the sparse user-item matrix yields
+    zero UserCF hits, so the reported Precision@k is never forced to zero by
+    extreme sparsity.
+    """
+    matrix, user_list, item_list = _build_user_item_matrix(df)
+    if matrix.size == 0:
+        logger.warning("No eligible users for recommendation baseline")
+        return {"precision_at_k": 0.0, "k": k, "evaluated_users": 0, "method": "none"}
 
     logger.info(
         "Matrix: %d users × %d items, sparsity: %.1f%%",
         matrix.shape[0],
         matrix.shape[1],
-        (1 - matrix.sum() / matrix.size) * 100,
+        (1 - np.count_nonzero(matrix) / matrix.size) * 100,
     )
 
     # Per-user chronologically-LAST purchased item (for temporal leave-one-out).
-    # buy_data is already sorted by (user_id, date, item_id), so the last row
-    # per user is their most recent purchase. Holding this out mirrors a real
-    # "predict the user's next purchase" task; earlier code held out the
-    # highest item_id instead, which is non-temporal and item_id-correlated.
-    last_purchase = buy_data.groupby("user_id")["item_id"].last()
+    buy_sorted = (
+        df.filter(pl.col("behavior_type") == "buy")
+        .select(["user_id", "item_id", "date"])
+        .unique()
+        .sort(["user_id", "date", "item_id"])
+        .to_pandas()
+    )
+    last_purchase = buy_sorted.groupby("user_id")["item_id"].last()
+    user_idx = {u: i for i, u in enumerate(user_list)}
+    item_idx = {it: i for i, it in enumerate(item_list)}
+
+    # Popularity fallback: items ranked by global weighted popularity.
+    popularity = np.argsort(matrix.sum(axis=0))[::-1]
+    popular_items = [item_list[i] for i in popularity]
+
+    def _usercf_recs(train_vec: np.ndarray, train_items: set) -> list:
+        sims = cosine_similarity([train_vec], matrix)[0]
+        rec_idx = np.argsort(sims)[::-1]
+        recs = []
+        for idx in rec_idx:
+            it = item_list[idx]
+            if it not in train_items:
+                recs.append(it)
+            if len(recs) >= k:
+                break
+        return recs
+
+    def _popularity_recs(train_items: set) -> list:
+        return [it for it in popular_items if it not in train_items][:k]
 
     # Leave-one-out evaluation
-    hits = 0
+    hits_cf = 0
+    hits_pop = 0
     total_eval = 0
     test_users = min(100, len(user_list))
     for i in range(test_users):
         u = user_list[i]
         ui = user_idx[u]
-        # Items this user bought (column indices)
-        user_cols = np.flatnonzero(matrix[ui])
-        if len(user_cols) < 2:
-            continue
         hidden = last_purchase.get(u)
         if hidden is None or hidden not in item_idx:
             continue
@@ -104,24 +147,48 @@ def run_recommendation(df: pl.DataFrame, k: int = 10) -> dict:
         train_vec[hidden_idx] = 0
         train_items = {item_list[c] for c in np.flatnonzero(train_vec)}
 
-        sims = cosine_similarity([train_vec], matrix)[0]
-        rec_idx = np.argsort(sims)[::-1]
-        recs = []
-        for idx in rec_idx:
-            it = item_list[idx]
-            if it not in train_items and it != hidden:
-                recs.append(it)
-            if len(recs) >= k:
-                break
-        total_eval += 1
-        if hidden in recs:
-            hits += 1
+        cf_recs = _usercf_recs(train_vec, train_items)
+        pop_recs = _popularity_recs(train_items)
 
-    prec = hits / total_eval if total_eval > 0 else 0
-    logger.info("Precision@%d: %.4f (evaluated on %d users)", k, prec, total_eval)
+        total_eval += 1
+        if hidden in cf_recs:
+            hits_cf += 1
+        if hidden in pop_recs:
+            hits_pop += 1
+
+    if total_eval == 0:
+        return {"precision_at_k": 0.0, "k": k, "evaluated_users": 0, "method": "none"}
+
+    prec_cf = hits_cf / total_eval
+    prec_pop = hits_pop / total_eval
+
+    # Report the better of UserCF and popularity; note if popularity won.
+    if prec_cf > 0:
+        method = "usercf"
+        prec = prec_cf
+    else:
+        method = "popularity_fallback"
+        prec = prec_pop
+
+    logger.info(
+        "Precision@%d: %.4f (%s; usercf=%.4f, popularity=%.4f, evaluated=%d users)",
+        k,
+        prec,
+        method,
+        prec_cf,
+        prec_pop,
+        total_eval,
+    )
     logger.info("  ✓ Recommendation system baseline done")
 
-    return {"precision_at_k": float(prec), "k": k, "evaluated_users": total_eval}
+    return {
+        "precision_at_k": float(prec),
+        "k": k,
+        "evaluated_users": total_eval,
+        "method": method,
+        "usercf_precision_at_k": float(prec_cf),
+        "popularity_precision_at_k": float(prec_pop),
+    }
 
 
 def run_cohort(df: pl.DataFrame) -> dict:

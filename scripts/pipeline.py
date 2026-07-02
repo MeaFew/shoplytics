@@ -23,7 +23,14 @@ Improvements retained from the original pipeline:
 
 import json
 import logging
+import sys
 import warnings
+from pathlib import Path
+
+# Allow running this script directly from scripts/.
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 from ab_testing import run_ab_test
 from churn_prediction import run_churn_prediction
@@ -178,7 +185,8 @@ def main() -> None:
             "ab_test_significant": ab_result["significant"],
             "ab_test_lift_pct": round(ab_result["lift_pct"], 2),
             "srm_p_value": round(ab_result["srm_pvalue"], 4),
-            "usercf_precision_at_10": round(rec_result["precision_at_k"], 4),
+            "recommendation_precision_at_10": round(rec_result["precision_at_k"], 4),
+            "recommendation_method": rec_result.get("method", "usercf"),
             "top_20_ltv_contribution_pct": round(ltv_result["top_20_contribution_pct"], 1),
         },
         "headline_business_metrics": headline,
@@ -197,7 +205,7 @@ Key Metrics:
   A/B test p-value:   %.4f (%s)
   A/B test lift:      %+.2f%%
   SRM p-value:        %.4f
-  UserCF Precision@10: %.4f
+  Rec Precision@10:   %.4f (%s)
   Top 20%% LTV contr:  %.1f%%
 """,
         churn_result["xgb_auc"],
@@ -207,6 +215,7 @@ Key Metrics:
         ab_result["lift_pct"],
         ab_result["srm_pvalue"],
         rec_result["precision_at_k"],
+        rec_result.get("method", "usercf"),
         ltv_result["top_20_contribution_pct"],
     )
 

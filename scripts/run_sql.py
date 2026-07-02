@@ -18,6 +18,11 @@ from pathlib import Path
 
 import duckdb
 
+# Allow running this script directly from scripts/.
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 from config import DUCKDB_PATH, PROJECT_ROOT
 
 SQL_DIR = PROJECT_ROOT / "sql"

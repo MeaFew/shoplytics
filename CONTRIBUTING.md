@@ -54,10 +54,14 @@ make dashboard
 
 ```bash
 # Python lint
-ruff check scripts/ dashboard/ pyspark/ --ignore E501,F401,E402
+ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/
 
-# SQL lint
+# SQL lint (Windows 下如遇编码报错, 请设置 PYTHONUTF8=1)
 sqlfluff lint sql/
+# Windows PowerShell/Git Bash:
+#   $env:PYTHONUTF8=1; sqlfluff lint sql/
+# Windows CMD:
+#   set PYTHONUTF8=1 && sqlfluff lint sql/
 
 # 单元测试
 pytest tests/ -v

@@ -7,12 +7,23 @@ In production, deploy to Prefect Cloud or a self-hosted server.
 Install: pip install prefect
 """
 
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import DUCKDB_PATH, PROCESSED_DATA_DIR, RAW_CSV_PATH
+from config import DUCKDB_PATH, PROCESSED_DATA_DIR, PROJECT_ROOT, RAW_CSV_PATH
+
+
+def _env():
+    """Return an environment dict with project-root PYTHONPATH and absolute dbt paths."""
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(PROJECT_ROOT)
+    env["DBT_DUCKDB_PATH"] = str(DUCKDB_PATH)
+    env["DBT_DATA_PATH"] = str(PROCESSED_DATA_DIR / "user_behavior_cleaned.csv")
+    return env
+
 
 # --- Prefect imports (install: pip install prefect) ---
 try:
@@ -54,6 +65,7 @@ def preprocess_data(input_path: str | None = None, output_dir: str | None = None
         ],
         capture_output=True,
         text=True,
+        env=_env(),
     )
     print(result.stdout[-500:])
     if result.returncode != 0:
@@ -90,9 +102,9 @@ def run_dbt_models():
     """Step 3: Run dbt models and tests."""
     import subprocess
 
-    result = subprocess.run(["dbt", "run"], cwd="dbt", capture_output=True, text=True)
+    result = subprocess.run(["dbt", "run"], cwd="dbt", capture_output=True, text=True, env=_env())
     print(result.stdout[-500:])
-    result = subprocess.run(["dbt", "test"], cwd="dbt", capture_output=True, text=True)
+    result = subprocess.run(["dbt", "test"], cwd="dbt", capture_output=True, text=True, env=_env())
     print(result.stdout[-500:])
     return "dbt models and tests completed"
 
@@ -102,7 +114,9 @@ def run_modeling_pipeline():
     """Step 4: Run Python analysis pipeline (EDA, churn, A/B, cohort, LTV)."""
     import subprocess
 
-    result = subprocess.run(["python", "scripts/pipeline.py"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["python", "scripts/pipeline.py"], capture_output=True, text=True, env=_env()
+    )
     print(result.stdout[-800:])
     if result.returncode != 0:
         raise RuntimeError(result.stderr[-500:])

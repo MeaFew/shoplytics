@@ -7,6 +7,14 @@
 # This Makefile serves as a local development entry point
 # ============================================================
 
+# Project root on sys.path so scripts can `import config` when invoked directly.
+export PYTHONPATH := $(CURDIR)
+
+# Absolute paths for dbt so DuckDB / seed references resolve the same way whether
+# dbt is invoked from inside dbt/ or from the repo root with --project-dir.
+export DBT_DUCKDB_PATH := $(CURDIR)/data/processed/analytics.duckdb
+export DBT_DATA_PATH := $(CURDIR)/data/processed/user_behavior_cleaned.csv
+
 setup:
 	pip install -r requirements.txt
 
@@ -35,7 +43,7 @@ test:
 
 lint:
 	ruff check scripts/ dashboard/ pyspark/ tests/ orchestration/
-	sqlfluff lint sql/
+	PYTHONUTF8=1 sqlfluff lint sql/
 
 format:
 	ruff format scripts/ dashboard/ pyspark/ tests/ orchestration/
